@@ -1,0 +1,17 @@
+﻿@CoreAuthAPI_HostAddress = https://localhost:7284
+
+POST {{CoreAuthAPI_HostAddress}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "username": "stajyer_kral",
+  "password": "SuperGizliPassword123!"
+}
+### Kullanıcı Girişi ve Token Alma
+POST {{CoreAuthAPI_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "stajyer_kral",
+  "password": "SuperGizliPassword123!"
+}
