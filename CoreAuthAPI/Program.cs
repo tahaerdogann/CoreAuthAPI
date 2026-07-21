@@ -1,10 +1,10 @@
-﻿using CoreAuthAPI.Data;
+﻿using Rental.DataAccess.Context;
 using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
 // Veritabanı bağlantımızı sisteme tanıtıyoruz
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<RentalDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.

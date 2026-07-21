@@ -1,6 +1,7 @@
-﻿using CoreAuthAPI.Data;
+﻿using Rental.DataAccess.Context;
+using Rental.Entities.Entity;
+using Rental.Entities.Enum;
 using CoreAuthAPI.Dtos;
-using CoreAuthAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,11 +14,11 @@ namespace CoreAuthAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly RentalDbContext _context;
         private readonly IConfiguration _configuration;
 
-        // Veritabanı ve appsettings.json dosyasına erişim köprülerini kuruyoruz
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        // Artık AppDbContext değil, yeni katmandaki RentalDbContext'i kullanıyoruz
+        public AuthController(RentalDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
@@ -26,16 +27,20 @@ namespace CoreAuthAPI.Controllers
         [HttpPost("register")]
         public IActionResult Register(UserDto request)
         {
-            // Kullanıcı adı daha önce alınmış mı kontrolü
-            if (_context.Users.Any(u => u.Username == request.Username))
-                return BadRequest("Bu kullanıcı adı zaten mevcut.");
+            if (_context.Users.Any(u => u.Email == request.Email))
+                return BadRequest("Bu email adresi zaten mevcut.");
 
             var user = new User
             {
-                Username = request.Username,
-                // Şifreyi açıkça değil, BCrypt ile kriptolayarak kaydediyoruz
+                Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = "Customer" // Varsayılan rol
+                // Mentorün istediği diğer alanları şimdilik varsayılan dolduruyoruz
+                Name = "Stajyer",
+                Surname = "Kral",
+                PhoneNumber = "5550000000",
+                Type = UserRoles.Customer,
+                Status = UserStatus.Active,
+                RecordUserCode = 1
             };
 
             _context.Users.Add(user);
@@ -47,31 +52,25 @@ namespace CoreAuthAPI.Controllers
         [HttpPost("login")]
         public IActionResult Login(UserDto request)
         {
-            // Veritabanından kullanıcıyı bul
-            var user = _context.Users.FirstOrDefault(u => u.Username == request.Username);
+            var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
             if (user == null)
                 return BadRequest("Kullanıcı bulunamadı.");
 
-            // Girilen şifre ile veritabanındaki kriptolu şifre eşleşiyor mu kontrolü
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return BadRequest("Hatalı şifre.");
 
-            // Şifre doğruysa JWT Token üret ve gönder
             string token = CreateToken(user);
             return Ok(new { Token = token });
         }
 
-        // JWT Token Üretme Motoru
         private string CreateToken(User user)
         {
-            // Token'ın içine kullanıcının adını ve rolünü (kimlik kartı bilgileri) gömüyoruz
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Type.ToString()) // Enum'u string olarak token'a gömüyoruz
             };
 
-            // appsettings.json'daki gizli anahtarımızı alıyoruz
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 _configuration.GetSection("Jwt:Key").Value!));
 
@@ -81,7 +80,7 @@ namespace CoreAuthAPI.Controllers
                 issuer: _configuration.GetSection("Jwt:Issuer").Value,
                 audience: _configuration.GetSection("Jwt:Audience").Value,
                 claims: claims,
-                expires: DateTime.Now.AddDays(1), // Token 1 gün geçerli olsun
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds
             );
 
