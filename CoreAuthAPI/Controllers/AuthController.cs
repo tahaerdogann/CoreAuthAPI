@@ -17,7 +17,7 @@ namespace CoreAuthAPI.Controllers
         private readonly RentalDbContext _context;
         private readonly IConfiguration _configuration;
 
-        // Artık AppDbContext değil, yeni katmandaki RentalDbContext'i kullanıyoruz
+        // yeni katmandaki RentalDbContext'i kullanıyoruz
         public AuthController(RentalDbContext context, IConfiguration configuration)
         {
             _context = context;
@@ -34,7 +34,7 @@ namespace CoreAuthAPI.Controllers
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                // Mentorün istediği diğer alanları şimdilik varsayılan dolduruyoruz
+                // diğer alanları şimdilik varsayılan dolduruyoruz
                 Name = "Stajyer",
                 Surname = "Kral",
                 PhoneNumber = "5550000000",
