@@ -1,5 +1,6 @@
 ﻿@CoreAuthAPI_HostAddress = https://localhost:7284
 
+### Kullanıcı Kaydı (Register)
 POST {{CoreAuthAPI_HostAddress}}/api/Auth/register
 Content-Type: application/json
 
@@ -7,7 +8,8 @@ Content-Type: application/json
   "email": "stajyer@sirket.com",
   "password": "SuperGizliPassword123!"
 }
-### Kullanıcı Girişi ve Token Alma
+
+### Kullanıcı Girişi ve Token Alma (Login)
 POST {{CoreAuthAPI_HostAddress}}/api/Auth/login
 Content-Type: application/json
 
@@ -15,3 +17,20 @@ Content-Type: application/json
   "email": "stajyer@sirket.com",
   "password": "SuperGizliPassword123!"
 }
+
+### ---------------- TEST ALANI ---------------- ###
+
+### 1. Herkese Açık Alan
+GET {{CoreAuthAPI_HostAddress}}/api/test/public
+
+### 2. Korumalı Alan (Token Gerektirir)
+GET {{CoreAuthAPI_HostAddress}}/api/test/protected
+Authorization: Bearer PASTE_YOUR_TOKEN_HERE
+
+### 3. Sadece Müşteriler Girebilir
+GET {{CoreAuthAPI_HostAddress}}/api/test/customer-only
+Authorization: Bearer PASTE_YOUR_TOKEN_HERE
+
+### 4. Sadece Adminler Girebilir
+GET {{CoreAuthAPI_HostAddress}}/api/test/admin-only
+Authorization: Bearer PASTE_YOUR_TOKEN_HERE

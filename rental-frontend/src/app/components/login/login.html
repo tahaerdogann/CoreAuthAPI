@@ -1,0 +1,24 @@
+<div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+  <h2 style="text-align: center;">Giriş Yap</h2>
+
+  <div style="margin-bottom: 15px;">
+    <label>Email:</label>
+    <!-- [(ngModel)]="email" diyerek bu inputu ts dosyasındaki email değişkenine bağladık -->
+    <input type="email" [(ngModel)]="email" placeholder="ornek@mail.com" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label>Şifre:</label>
+    <!-- Aynı şekilde password değişkenine bağladık -->
+    <input type="password" [(ngModel)]="password" placeholder="Şifreniz" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+  </div>
+
+  <!-- (click)="girisYap()" ile butona tıklama özelliği kazandırdık -->
+  <button (click)="girisYap()" style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+    Giriş
+  </button>
+
+  <p style="text-align: center; margin-top: 15px;">
+    Hesabın yok mu? <a routerLink="/register" style="color: #007bff; text-decoration: none;">Kayıt Ol</a>
+  </p>
+</div>

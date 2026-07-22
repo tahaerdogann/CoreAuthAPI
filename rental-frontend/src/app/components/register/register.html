@@ -1,0 +1,21 @@
+<div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+  <h2 style="text-align: center;">Kayıt Ol</h2>
+
+  <div style="margin-bottom: 15px;">
+    <label>Email:</label>
+    <input type="email" [(ngModel)]="email" placeholder="ornek@mail.com" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label>Şifre:</label>
+    <input type="password" [(ngModel)]="password" placeholder="En az 6 karakter" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+  </div>
+
+  <button (click)="kayitOl()" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+    Kayıt Ol
+  </button>
+
+  <p style="text-align: center; margin-top: 15px;">
+    Zaten hesabın var mı? <a routerLink="/login" style="color: #007bff; text-decoration: none;">Giriş Yap</a>
+  </p>
+</div>
