@@ -1,14 +1,12 @@
 import { Routes } from '@angular/router';
-import { Login } from './components/login/login';
-import { Register } from './components/register/register';
 import { Dashboard } from './components/dashboard/dashboard';
-import { authGuard } from './guards/auth-guard';
+// Sınıf adın büyük ihtimalle Login veya LoginComponent şeklindedir, ona göre güncelleyebilirsin
+import { Login } from './components/login/login';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'login', component: Login },
-  { path: 'register', component: Register },
+  // 1. ANA SAYFA HERKESE AÇIK: Guard yok!
+  { path: '', component: Dashboard },
 
-  // Güvenlik görevlisini buraya bağlıyoruz
-  { path: 'dashboard', component: Dashboard, canActivate: [authGuard] }
+  // 2. LOGIN SAYFASI
+  { path: 'login', component: Login }
 ];
