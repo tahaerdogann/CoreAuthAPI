@@ -1,0 +1,36 @@
+<div style="max-width: 600px; margin: 50px auto; padding: 30px; background-color: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-family: sans-serif;">
+
+  <h2 style="color: #1a1a1a; margin-top: 0; border-bottom: 3px solid #84cc16; padding-bottom: 10px; display: inline-block;">List Your Venue</h2>
+  <p style="color: #666; margin-bottom: 25px;">Yeni sahanızı sisteme ekleyin ve hemen kazanmaya başlayın.</p>
+
+  <form (ngSubmit)="sahaKaydet()" #sahaForm="ngForm" style="display: flex; flex-direction: column; gap: 15px;">
+
+    <!-- Saha Adı -->
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Saha Adı / Tesis Adı</label>
+      <input type="text" [(ngModel)]="yeniSaha.name" name="name" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+    </div>
+
+    <!-- Saha Tipi -->
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Spor Tipi</label>
+      <select [(ngModel)]="yeniSaha.type" name="type" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+        <option value="Football">Futbol (Halısaha)</option>
+        <option value="Tennis">Tenis Kortu</option>
+        <option value="Basketball">Basketbol Sahası</option>
+      </select>
+    </div>
+
+    <!-- Saatlik Ücret -->
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Saatlik Ücret (₺)</label>
+      <input type="number" [(ngModel)]="yeniSaha.hourlyPrice" name="hourlyPrice" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+    </div>
+
+    <!-- Buton -->
+    <button type="submit" [disabled]="!sahaForm.valid" style="background-color: #84cc16; color: #1a1a1a; padding: 12px; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.3s;">
+      Sahayı Yayınla
+    </button>
+  </form>
+
+</div>

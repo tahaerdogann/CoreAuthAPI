@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace CoreAuthAPI.Controllers
 {
@@ -17,7 +18,6 @@ namespace CoreAuthAPI.Controllers
         private readonly RentalDbContext _context;
         private readonly IConfiguration _configuration;
 
-        // yeni katmandaki RentalDbContext'i kullanıyoruz
         public AuthController(RentalDbContext context, IConfiguration configuration)
         {
             _context = context;
@@ -30,14 +30,17 @@ namespace CoreAuthAPI.Controllers
             if (_context.Users.Any(u => u.Email == request.Email))
                 return BadRequest("Bu email adresi zaten mevcut.");
 
+            // 1. Gelen şifreyi güvenli bir şekilde kriptoluyoruz (Hash)
+            string hashedPassword = CreatePasswordHash(request.Password);
+
+            // Dinamik DTO verilerini kullanıyoruz
             var user = new User
             {
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                // diğer alanları şimdilik varsayılan dolduruyoruz
-                Name = "Stajyer",
-                Surname = "Kral",
-                PhoneNumber = "5550000000",
+                Name = request.Name,
+                Surname = request.Surname,
+                PhoneNumber = request.PhoneNumber ?? "", // null gelirse boş string at
+                Email = request.Email ?? "",
+                PasswordHash = hashedPassword,
                 Type = UserRoles.Customer,
                 Status = UserStatus.Active,
                 RecordUserCode = 1
@@ -46,19 +49,26 @@ namespace CoreAuthAPI.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
 
-            return Ok("Kullanıcı başarıyla kaydedildi.");
+            // DÜZ METİN YERİNE TOKEN DÖNÜYORUZ (Otomatik Login için)
+            string token = CreateToken(user);
+            return Ok(new { token = token });
+
+
         }
 
         [HttpPost("login")]
         public IActionResult Login(UserDto request)
         {
+            // 1. E-posta sistemde var mı?
             var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
             if (user == null)
-                return BadRequest("Kullanıcı bulunamadı.");
+                return BadRequest("E-posta veya şifre hatalı.");
 
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                return BadRequest("Hatalı şifre.");
+            // 2. GİRİŞ GÜVENLİĞİ: Adamın girdiği şifreyle veritabanındaki kriptolu şifre eşleşiyor mu?
+            if (!VerifyPasswordHash(request.Password, user.PasswordHash))
+                return BadRequest("E-posta veya şifre hatalı.");
 
+            // 3. Her şey doğruysa Token üret
             string token = CreateToken(user);
             return Ok(new { Token = token });
         }
@@ -67,8 +77,9 @@ namespace CoreAuthAPI.Controllers
         {
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Type.ToString()) // Enum'u string olarak token'a gömüyoruz
+                new Claim(ClaimTypes.Role, user.Type.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -86,6 +97,33 @@ namespace CoreAuthAPI.Controllers
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        // --- YARDIMCI GÜVENLİK (HASH) METOTLARI ---
+        private string CreatePasswordHash(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+            }
+        }
+
+        private bool VerifyPasswordHash(string password, string storedHash)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var computedHash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+                return computedHash == storedHash;
+            }
+        }
+
+        [HttpGet("check-email")]
+        public IActionResult CheckEmail([FromQuery] string email)
+        {
+            bool exists = _context.Users.Any(u => u.Email == email);
+            return Ok(new { exists });
         }
     }
 }

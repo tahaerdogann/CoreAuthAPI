@@ -1,37 +1,149 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms'; // ngModel hatasını çözer
-import { RouterLink, Router } from '@angular/router';
-import { Auth } from '../../services/auth';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './register.html',
-  styleUrl: './register.css'
+  styleUrls: ['./register.css']
 })
-export class Register {
-  // HTML'in aradığı ve bulamadığı değişkenler
-  email = '';
-  password = '';
+export class RegisterComponent implements OnInit {
 
-  constructor(private authService: Auth, private router: Router) { }
+  registerForm!: FormGroup;
+  currentStep: number = 1;
+  contactMethod: 'email' | 'phone' = 'email';
 
-  // HTML'in aradığı ve bulamadığı fonksiyon
+  mesaj: string = '';
+  hata: string = '';
+  emailAlinmisMi: boolean = false;
+
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) { }
+
+  ngOnInit() {
+    this.registerForm = this.fb.group({
+      name: ['', Validators.required],
+      surname: ['', Validators.required],
+      email: ['', [Validators.email]],
+      phoneNumber: [''],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  passwordMatchValidator(control: AbstractControl) {
+    const password = control.get('password')?.value;
+    const confirmPassword = control.get('confirmPassword')?.value;
+    if (password !== confirmPassword) {
+      control.get('confirmPassword')?.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+    return null;
+  }
+
+  nextStep() {
+    if (this.currentStep === 1) {
+      if (this.registerForm.get('name')?.valid && this.registerForm.get('surname')?.valid) {
+        this.currentStep++;
+      } else {
+        this.hata = "Lütfen ad ve soyad alanlarını doldurun.";
+      }
+    }
+    else if (this.currentStep === 2) {
+      this.checkContactAndProceed();
+    }
+  }
+
+  previousStep() {
+    this.currentStep--;
+    this.hata = '';
+  }
+
+  toggleContactMethod() {
+    this.contactMethod = this.contactMethod === 'email' ? 'phone' : 'email';
+    this.hata = '';
+    this.registerForm.patchValue({ email: '', phoneNumber: '' });
+  }
+
+  checkContactAndProceed() {
+    this.hata = '';
+
+    if (this.contactMethod === 'email') {
+      const emailControl = this.registerForm.get('email');
+      if (emailControl?.invalid || !emailControl?.value) {
+        this.hata = "Lütfen geçerli bir e-posta adresi girin.";
+        return;
+      }
+
+      this.authService.checkEmail(emailControl.value).subscribe(res => {
+        if (res.exists) {
+          this.hata = "Bu e-posta adresi sistemde zaten kayıtlı!";
+          this.emailAlinmisMi = true;
+        } else {
+          this.emailAlinmisMi = false;
+          this.currentStep++;
+        }
+      });
+    }
+    else {
+      const phoneControl = this.registerForm.get('phoneNumber');
+      if (!phoneControl?.value || phoneControl.value.length < 10) {
+        this.hata = "Lütfen geçerli bir telefon numarası girin.";
+        return;
+      }
+      this.currentStep++;
+    }
+  }
+
   kayitOl() {
-    const registerData = {
-      email: this.email,
-      password: this.password
+    if (this.registerForm.invalid) {
+      this.hata = "Lütfen şifrelerinizi kontrol edin (En az 6 karakter ve eşleşmeli).";
+      return;
+    }
+
+    this.mesaj = 'Kaydınız oluşturuluyor...';
+    this.hata = '';
+
+    const payload = {
+      name: this.registerForm.value.name,
+      surname: this.registerForm.value.surname,
+      email: this.registerForm.value.email,
+      phoneNumber: this.registerForm.value.phoneNumber,
+      password: this.registerForm.value.password
     };
 
-    this.authService.register(registerData).subscribe({
+    this.authService.register(payload).subscribe({
       next: (response: any) => {
-        console.log("Kayıt Başarılı:", response);
-        alert("Harika! Kayıt başarılı. Şimdi giriş yapabilirsin.");
-        this.router.navigate(['/login']);
+        localStorage.setItem('token', response.token);
+        this.mesaj = 'Kayıt başarılı! Yönlendiriliyorsunuz...';
+
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 1500);
       },
       error: (err) => {
-        console.error("Kayıt Hatası:", err);
-        alert("Kayıt başarısız! Konsoldaki hatayı incele.");
+        this.mesaj = '';
+        this.hata = typeof err.error === 'string' ? err.error : 'Kayıt olurken bir hata oluştu.';
+        console.error("Detaylı Hata:", err);
+        // Backend'den gelen hatayı akıllıca yakalıyoruz
+        if (typeof err.error === 'string') {
+          this.hata = err.error;
+        } else if (err.error && err.error.title) {
+          this.hata = err.error.title; // .NET validasyon hataları
+        } else if (err.error && typeof err.error === 'object') {
+          // Eğer nesne döndüyse ilk hatayı ekrana bas
+          const firstKey = Object.keys(err.error)[0];
+          this.hata = err.error[firstKey] || 'Kayıt olurken bir hata oluştu.';
+        } else {
+          this.hata = 'Sunucuya bağlanırken bir hata oluştu.';
+        }
       }
     });
   }

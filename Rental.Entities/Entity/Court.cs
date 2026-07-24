@@ -1,19 +1,18 @@
-﻿namespace Rental.Entities.Entity
+﻿using System.ComponentModel.DataAnnotations.Schema; // Bunu en üste ekle
+
+namespace Rental.Entities.Entity
 {
     public class Court
     {
         public int Id { get; set; }
-
-        // Sahanın Adı (Örn: "Yıldızlar Halısaha", "Kapalı Basketbol Kortu")
         public string Name { get; set; }
-
-        // Saha Tipi (Örn: "Halısaha", "Basketbol", "Tenis")
         public string Type { get; set; }
 
-        // Saatlik Kiralama Ücreti
+        // Kuruş hassasiyeti eklendi (Virgülden sonra 2 hane)
+        [Column(TypeName = "decimal(18,2)")]
         public decimal HourlyPrice { get; set; }
 
-        // Saha şu an kiralamaya açık mı? (Bakımda vs. olabilir)
         public bool IsActive { get; set; } = true;
+        public int OwnerId { get; set; }
     }
 }

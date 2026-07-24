@@ -1,0 +1,111 @@
+<div style="display: flex; height: calc(100vh - 60px); background-color: #f4f6f9; padding: 20px; gap: 20px; font-family: Arial, sans-serif;">
+
+  <!-- SOL PANEL (Detaylar / İşlem Alanı) - EKRANIN %65'i -->
+  <div style="flex: 0 0 65%; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden;">
+
+    <!-- Üst Seçim Alanı -->
+    <div style="padding: 20px; border-bottom: 1px solid #eee; background-color: #fafafa;">
+      <h2 style="margin: 0 0 15px 0; color: #333;">Yönetim Paneli</h2>
+      <label style="font-weight: bold; color: #555; margin-right: 10px;">İşlem Yapılacak Saha:</label>
+      <select (change)="onCourtSelected($event)" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; width: 300px;">
+        <option value="">-- Lütfen Sahanızı Seçin --</option>
+        <option *ngFor="let court of myCourts" [value]="court.id">{{ court.name }} ({{ court.type }})</option>
+      </select>
+    </div>
+
+    <!-- Sekmeler (Tabs) Sadece Saha Seçiliyse Görünür -->
+    <div *ngIf="selectedCourtId" style="display: flex; flex-direction: column; height: 100%;">
+
+      <!-- Sekme Başlıkları -->
+      <div style="display: flex; border-bottom: 1px solid #ddd; background-color: #fdfdfd;">
+        <button (click)="switchTab(1)" [style.background-color]="activeTab === 1 ? 'white' : 'transparent'" [style.border-bottom]="activeTab === 1 ? '2px solid #007bff' : 'none'" [style.font-weight]="activeTab === 1 ? 'bold' : 'normal'" style="flex: 1; padding: 15px; border: none; cursor: pointer; color: #333; font-size: 16px;">
+          📅 Takvim & Yeni İlan (Slot) Ayarları
+        </button>
+        <button (click)="switchTab(2)" [style.background-color]="activeTab === 2 ? 'white' : 'transparent'" [style.border-bottom]="activeTab === 2 ? '2px solid #007bff' : 'none'" [style.font-weight]="activeTab === 2 ? 'bold' : 'normal'" style="flex: 1; padding: 15px; border: none; cursor: pointer; color: #333; font-size: 16px;">
+          👥 Rezervasyonlar
+        </button>
+      </div>
+
+      <!-- SEKME 1 İÇERİĞİ: Yeni İlan Formu -->
+      <div *ngIf="activeTab === 1" style="padding: 30px; flex: 1; overflow-y: auto;">
+        <h3 style="color: #2c3e50; margin-top: 0;">Yeni Saat Dilimi (Slot) Oluştur</h3>
+        <p style="color: #7f8c8d; font-size: 14px;">Müşterilerin kiralayabilmesi için sahanızın boş saatlerini sisteme tanımlayın.</p>
+
+        <form [formGroup]="slotForm" style="margin-top: 25px; max-width: 400px;">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Başlangıç Tarihi ve Saati:</label>
+            <input type="datetime-local" formControlName="startTime" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Bitiş Tarihi ve Saati:</label>
+            <input type="datetime-local" formControlName="endTime" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+
+          <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Bu Saatin Ücreti (₺):</label>
+            <input type="number" formControlName="price" placeholder="Örn: 1500" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="button" (click)="slotForm.reset()" style="padding: 12px 20px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">İptal</button>
+            <button type="button" (click)="saveSlot()" style="flex: 1; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Kaydet & İlana Çıkar</button>
+          </div>
+
+          <p *ngIf="mesaj" style="color: #27ae60; margin-top: 15px; font-weight: bold;">{{ mesaj }}</p>
+          <p *ngIf="hata" style="color: #c0392b; margin-top: 15px; font-weight: bold;">{{ hata }}</p>
+        </form>
+      </div>
+
+      <!-- SEKME 2 İÇERİĞİ: Rezervasyon Listesi -->
+      <div *ngIf="activeTab === 2" style="padding: 30px; flex: 1; overflow-y: auto;">
+        <h3 style="color: #2c3e50; margin-top: 0;">Aktif Rezervasyonlar</h3>
+        <p style="color: #7f8c8d; font-size: 14px;">Müşterilerin yaptığı kiralamalar ve iptal işlemleri burada görünür.</p>
+        <!-- Burası sonraki adımda detaylandırılacak -->
+        <div style="padding: 20px; background-color: #fef9e7; border-left: 4px solid #f1c40f; border-radius: 4px;">
+          Şu an için gösterilecek rezervasyon bulunamadı.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Saha seçili değilse gösterilecek boş ekran -->
+    <div *ngIf="!selectedCourtId" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #95a5a6;">
+      <h3>👆 Lütfen işlem yapmak için yukarıdan bir saha seçin.</h3>
+    </div>
+  </div>
+
+
+  <!-- SAĞ PANEL (Liste Alanı - Current Listings) - EKRANIN %35'i -->
+  <div style="flex: 0 0 35%; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; overflow-y: auto;">
+    <h3 style="margin-top: 0; color: #333; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+      Açık İlanlar (Slotlar)
+      <span style="font-size: 12px; background-color: #007bff; color: white; padding: 4px 8px; border-radius: 12px;">{{ courtSlots.length }} Adet</span>
+    </h3>
+
+    <div *ngIf="!selectedCourtId" style="text-align: center; color: #95a5a6; margin-top: 40px;">
+      Önce sol taraftan saha seçmelisiniz.
+    </div>
+
+    <div *ngIf="selectedCourtId && courtSlots.length === 0" style="text-align: center; color: #95a5a6; margin-top: 40px;">
+      Bu saha için henüz açılmış bir saat dilimi yok.
+    </div>
+
+    <!-- Slot Kartları -->
+    <div *ngFor="let slot of courtSlots" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid #007bff; border-radius: 4px; padding: 15px; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <strong style="color: #2c3e50;">{{ slot.startTime | date:'dd MMM yyyy' }}</strong>
+        <span [style.color]="slot.isBooked ? '#e74c3c' : '#27ae60'" style="font-weight: bold; font-size: 13px;">
+          {{ slot.isBooked ? 'Dolu' : 'Boş' }}
+        </span>
+      </div>
+      <div style="color: #555; font-size: 14px; margin-bottom: 8px;">
+        🕒 {{ slot.startTime | date:'HH:mm' }} - {{ slot.endTime | date:'HH:mm' }}
+      </div>
+      <div style="color: #007bff; font-weight: bold;">
+        ₺{{ slot.price }}
+      </div>
+    </div>
+  </div>
+
+</div>

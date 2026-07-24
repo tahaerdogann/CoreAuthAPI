@@ -1,55 +1,32 @@
-<div style="padding: 30px; font-family: sans-serif; display: flex; gap: 40px;">
+<!-- ANA SAYFA (VİTRİN) -->
+<div style="padding: 40px; font-family: sans-serif; max-width: 1200px; margin: 0 auto;">
 
-  <!-- SOL TARAF: YENİ SAHA EKLEME FORMU -->
-  <div style="flex: 1; background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; height: fit-content;">
-    <h3>Yeni Saha Ekle</h3>
+  <h1 style="color: #333; margin-bottom: 30px;">Tüm Sahalar</h1>
 
-    <div style="margin-bottom: 15px;">
-      <label>Saha Adı:</label>
-      <input type="text" [(ngModel)]="yeniSaha.name" style="width: 100%; padding: 8px; margin-top: 5px;">
-    </div>
-
-    <div style="margin-bottom: 15px;">
-      <label>Saha Tipi:</label>
-      <select [(ngModel)]="yeniSaha.type" style="width: 100%; padding: 8px; margin-top: 5px;">
-        <option value="Halısaha">Halısaha</option>
-        <option value="Basketbol">Basketbol</option>
-        <option value="Tenis">Tenis</option>
-        <option value="Voleybol">Voleybol</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom: 15px;">
-      <label>Saatlik Ücret (₺):</label>
-      <input type="number" [(ngModel)]="yeniSaha.hourlyPrice" style="width: 100%; padding: 8px; margin-top: 5px;">
-    </div>
-
-    <button (click)="sahaKaydet()" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-      Sahayı Kaydet
-    </button>
-  </div>
-
-  <!-- SAĞ TARAF: SAHALARIN LİSTESİ -->
-  <div style="flex: 2;">
-    <h3>Mevcut Sahalarımız</h3>
-
-    <!-- Modern Angular @for döngüsü -->
+  <!-- Sahaların Listelendiği Izgara (Grid) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
     @for (saha of sahaListesi; track saha.id) {
-    <div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; background-color: white;">
-      <div>
-        <strong style="font-size: 18px; color: #0056b3;">{{ saha.name }}</strong> <br>
-        <span style="color: #666; font-size: 14px;">Tipi: {{ saha.type }} | Ücret: {{ saha.hourlyPrice }} ₺/Saat</span>
+    <div style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); background-color: white;">
+
+      <!-- Saha Resmi (Şimdilik yer tutucu bir gri kutu) -->
+      <div style="height: 150px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">
+        Görsel Gelecek
       </div>
-      <div>
-        <span [style.color]="saha.isActive ? 'green' : 'red'">
-          {{ saha.isActive ? '🟢 Aktif' : '🔴 Pasif' }}
-        </span>
+
+      <!-- Saha Bilgileri -->
+      <div style="padding: 20px;">
+        <h3 style="margin: 0 0 10px 0; color: #1a1a1a;">{{ saha.name }}</h3>
+        <p style="margin: 0; color: #666; font-size: 14px;">Tipi: {{ saha.type }}</p>
+        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #84cc16; font-size: 18px;">{{ saha.hourlyPrice }} ₺</strong>
+          <button style="background-color: #1a1a1a; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            Hemen Kirala
+          </button>
+        </div>
       </div>
     </div>
     } @empty {
-    <div style="padding: 20px; text-align: center; color: #777; border: 1px dashed #ccc; border-radius: 5px;">
-      Henüz sisteme eklenmiş bir saha yok. Yandaki formdan ilk sahayı ekleyebilirsin!
-    </div>
+    <p>Henüz sistemde hiç saha yok.</p>
     }
   </div>
 

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { Auth } from '../../services/auth';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +13,7 @@ export class Login {
   email = '';
   password = '';
 
-  constructor(private authService: Auth, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) { }
 
   girisYap() {
     const loginData = {
@@ -31,7 +31,7 @@ export class Login {
         // Dashboard'a yönlendirme yapılıyor
         this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
+       error: (err: any) => {
         console.error("Hata Oluştu:", err);
         alert("Giriş başarısız! Bilgilerini kontrol et.");
       }

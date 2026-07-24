@@ -13,5 +13,7 @@ namespace Rental.DataAccess.Context
 
         // YENİ EKLENEN: Sahalar tablomuz
         public DbSet<Court> Courts { get; set; }
+        public DbSet<CourtSlot> CourtSlots { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
     }
 }

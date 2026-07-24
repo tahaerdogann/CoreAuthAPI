@@ -1,21 +1,29 @@
-<!-- SABİT ÜST MENÜ (NAVBAR) -->
-<div style="background-color: #1a1a1a; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #84cc16;">
+<!-- Üst Menü (Navbar) -->
+<nav style="background-color: #2c3e50; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: sans-serif;">
 
-  <!-- Logo (Tıklayınca ana sayfaya gider) -->
-  <a href="/" style="text-decoration: none;">
-    <h2 style="margin: 0; color: #84cc16; font-family: sans-serif;">
-      <span style="background-color: #84cc16; color: #1a1a1a; padding: 2px 8px; border-radius: 4px;">BOOK</span>aPitch
-    </h2>
-  </a>
-
-  <!-- Sağ Üst Butonlar -->
+  <!-- Logo / Marka -->
   <div>
-    <!-- İleride buraya koşul koyup, giriş yapıldıysa "Profilim", yapılmadıysa "Login" yazdıracağız -->
-    <a href="/login" style="background-color: transparent; border: 1px solid #84cc16; color: #84cc16; padding: 8px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: sans-serif; transition: 0.3s;">
-      Login
-    </a>
+    <h2 style="margin: 0; font-size: 24px; color: #18bc9c;">Saha Kiralama Sistemi</h2>
   </div>
-</div>
 
-<!-- DEĞİŞEN SAYFALAR (Ana Sayfa, Login vs. buranın içine yüklenecek) -->
-<router-outlet></router-outlet>
+  <!-- Menü Butonları -->
+  <div>
+    <!-- Kullanıcı GİRİŞ YAPMAMIŞSA görünecek butonlar -->
+    <ng-container *ngIf="!authService.isLoggedIn()">
+      <a href="/login" style="color: white; text-decoration: none; font-weight: bold; background-color: #007bff; padding: 8px 15px; border-radius: 5px;">Giriş Yap</a>
+    </ng-container>
+    <!-- Kullanıcı GİRİŞ YAPMIŞSA görünecek butonlar -->
+    <ng-container *ngIf="authService.isLoggedIn()">
+
+      <button (click)="cikisYap()" style="background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">
+        Çıkış Yap
+      </button>
+    </ng-container>
+  </div>
+
+</nav>
+
+<!-- Sayfa İçeriklerinin Yükleneceği Alan -->
+<main style="padding: 20px; min-height: 80vh; background-color: #f8f9fa;">
+  <router-outlet></router-outlet>
+</main>
