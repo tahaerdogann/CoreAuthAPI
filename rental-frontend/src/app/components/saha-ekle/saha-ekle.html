@@ -1,36 +1,138 @@
-<div style="max-width: 600px; margin: 50px auto; padding: 30px; background-color: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-family: sans-serif;">
+<div style="background-color: #f4f6f9; padding: 40px 20px; font-family: Arial, sans-serif; min-height: 100vh;">
+  <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 900px; margin: 0 auto;">
 
-  <h2 style="color: #1a1a1a; margin-top: 0; border-bottom: 3px solid #84cc16; padding-bottom: 10px; display: inline-block;">List Your Venue</h2>
-  <p style="color: #666; margin-bottom: 25px;">Yeni sahanızı sisteme ekleyin ve hemen kazanmaya başlayın.</p>
+    <h2 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+      🏟️ Yeni Tesis Kartı Oluştur
+    </h2>
 
-  <form (ngSubmit)="sahaKaydet()" #sahaForm="ngForm" style="display: flex; flex-direction: column; gap: 15px;">
+    <form [formGroup]="sahaForm" (ngSubmit)="kaydet()">
 
-    <!-- Saha Adı -->
-    <div>
-      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Saha Adı / Tesis Adı</label>
-      <input type="text" [(ngModel)]="yeniSaha.name" name="name" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-    </div>
+      <!-- 1. BÖLÜM: TEMEL BİLGİLER & SPOR TÜRÜ -->
+      <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
 
-    <!-- Saha Tipi -->
-    <div>
-      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Spor Tipi</label>
-      <select [(ngModel)]="yeniSaha.type" name="type" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-        <option value="Football">Futbol (Halısaha)</option>
-        <option value="Tennis">Tenis Kortu</option>
-        <option value="Basketball">Basketbol Sahası</option>
-      </select>
-    </div>
+        <div style="flex: 1; min-width: 250px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Tesis / Saha Adı</label>
+          <input type="text" formControlName="name" placeholder="Örn: Merkez Arena" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        </div>
 
-    <!-- Saatlik Ücret -->
-    <div>
-      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Saatlik Ücret (₺)</label>
-      <input type="number" [(ngModel)]="yeniSaha.hourlyPrice" name="hourlyPrice" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-    </div>
+        <div style="flex: 1; min-width: 250px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Spor Dalı</label>
+          <select formControlName="sportType" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            <option value="Futbol">⚽ Futbol</option>
+            <option value="Basketbol">🏀 Basketbol</option>
+            <option value="Tenis">🎾 Tenis Kortu</option>
+            <option value="Voleybol">🏐 Voleybol</option>
+          </select>
+        </div>
 
-    <!-- Buton -->
-    <button type="submit" [disabled]="!sahaForm.valid" style="background-color: #84cc16; color: #1a1a1a; padding: 12px; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.3s;">
-      Sahayı Yayınla
-    </button>
-  </form>
+        <div style="flex: 1; min-width: 250px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Zemin Türü (Segmented Control)</label>
+          <div style="display: flex; border: 1px solid #007bff; border-radius: 4px; overflow: hidden;">
+            <label [style.background]="sahaForm.get('surfaceType')?.value === 'Suni Çim' ? '#007bff' : 'white'"
+                   [style.color]="sahaForm.get('surfaceType')?.value === 'Suni Çim' ? 'white' : '#007bff'"
+                   style="flex: 1; text-align: center; padding: 10px; cursor: pointer; margin: 0; font-weight: bold;">
+              <input type="radio" formControlName="surfaceType" value="Suni Çim" style="display: none;"> Suni Çim
+            </label>
+            <label [style.background]="sahaForm.get('surfaceType')?.value === 'Doğal Çim' ? '#007bff' : 'white'"
+                   [style.color]="sahaForm.get('surfaceType')?.value === 'Doğal Çim' ? 'white' : '#007bff'"
+                   style="flex: 1; text-align: center; padding: 10px; cursor: pointer; margin: 0; font-weight: bold; border-left: 1px solid #007bff;">
+              <input type="radio" formControlName="surfaceType" value="Doğal Çim" style="display: none;"> Doğal Çim
+            </label>
+          </div>
+        </div>
+      </div>
 
+      <!-- 2. BÖLÜM: PROFESYONEL LOKASYON -->
+      <h3 style="color: #34495e; margin-bottom: 15px;">📍 Lokasyon Bilgileri</h3>
+      <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+
+        <div style="flex: 1;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px;">İl (Şehir)</label>
+          <input type="text" list="illerList" formControlName="city" (change)="onCityChange($event)" placeholder="Örn: ist..." style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <datalist id="illerList">
+            <option *ngFor="let il of sehirler" [value]="il"></option>
+          </datalist>
+        </div>
+
+        <div style="flex: 1;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px;">İlçe</label>
+          <input type="text" list="ilcelerList" formControlName="district" (change)="onDistrictChange($event)" placeholder="İlçe seçin" [readonly]="aktifIlceler.length === 0" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <datalist id="ilcelerList">
+            <option *ngFor="let ilce of aktifIlceler" [value]="ilce"></option>
+          </datalist>
+        </div>
+
+        <div style="flex: 1;">
+          <label style="display: block; font-weight: bold; margin-bottom: 8px;">Mahalle</label>
+          <input type="text" list="mahallelerList" formControlName="neighborhood" placeholder="Mahalle seçin" [readonly]="aktifMahalleler.length === 0" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <datalist id="mahallelerList">
+            <option *ngFor="let mh of aktifMahalleler" [value]="mh"></option>
+          </datalist>
+        </div>
+      </div>
+
+      <!-- 3. BÖLÜM: TESİS İMKANLARI (AMENITIES - BITWISE) -->
+      <h3 style="color: #34495e; margin-top: 30px; margin-bottom: 15px;">🚿 Tesis İmkanları</h3>
+      <div formGroupName="amenities" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; background: #fdfdfd; padding: 20px; border: 1px solid #eee; border-radius: 4px;">
+        <label><input type="checkbox" formControlName="restroom"> 🚽 Tuvalet</label>
+        <label><input type="checkbox" formControlName="cafeteria"> ☕ Kafe / Büfe</label>
+        <label><input type="checkbox" formControlName="disabledAccess"> ♿ Engelli Erişimi</label>
+        <label><input type="checkbox" formControlName="changingRoom"> 👕 Soyunma Odası</label>
+        <label><input type="checkbox" formControlName="wifi"> 📶 Wi-Fi İnternet</label>
+        <label><input type="checkbox" formControlName="shower"> 🚿 Duş</label>
+        <label><input type="checkbox" formControlName="locker"> 🔒 Kilitli Dolap</label>
+        <label><input type="checkbox" formControlName="grandstand"> 🏟️ Tribün</label>
+        <label><input type="checkbox" formControlName="airConditioning"> ❄️ Klima</label>
+        <label><input type="checkbox" formControlName="prayerRoom"> 🕌 Mescit</label>
+        <label><input type="checkbox" formControlName="lighting"> 💡 Gece Işıklandırması</label>
+      </div>
+
+      <!-- 4. BÖLÜM: KİRALIK EKİPMANLAR (JSON) -->
+      <h3 style="color: #34495e; margin-top: 30px; margin-bottom: 15px;">🎽 Kiralık Ekstralar (Opsiyonel)</h3>
+      <div formGroupName="rentalOptions" style="display: flex; flex-direction: column; gap: 15px;">
+
+        <!-- KRAMPON -->
+        <div formGroupName="krampon" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #f1c40f;">
+          <label style="font-weight: bold; width: 120px;">
+            <input type="checkbox" formControlName="isActive"> Krampon
+          </label>
+          <ng-container *ngIf="sahaForm.get('rentalOptions.krampon.isActive')?.value">
+            <input type="number" formControlName="availableCount" placeholder="Mevcut Çift Sayısı" style="padding: 8px; width: 150px; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" formControlName="unitPrice" placeholder="Birim Fiyat (₺)" style="padding: 8px; width: 150px; border: 1px solid #ccc; border-radius: 4px;">
+          </ng-container>
+        </div>
+
+        <!-- KALECİ (Sadece Futbol) -->
+        <div *ngIf="isFootball" formGroupName="kaleci" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #e74c3c;">
+          <label style="font-weight: bold; width: 120px;">
+            <input type="checkbox" formControlName="isActive"> Kiralık Kaleci
+          </label>
+          <ng-container *ngIf="sahaForm.get('rentalOptions.kaleci.isActive')?.value">
+            <select formControlName="availableCount" style="padding: 8px; width: 150px; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="1">1 Kişi</option>
+              <option value="2">2 Kişi</option>
+            </select>
+            <input type="number" formControlName="unitPrice" placeholder="Kişi Başı Ücret (₺)" style="padding: 8px; width: 150px; border: 1px solid #ccc; border-radius: 4px;">
+          </ng-container>
+        </div>
+
+      </div>
+
+      <!-- FİYAT VE KAYDET -->
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Saha Saatlik Ücreti (₺)</label>
+          <input type="number" formControlName="hourlyPrice" placeholder="Örn: 1500" style="padding: 12px; font-size: 18px; border: 2px solid #27ae60; border-radius: 4px; width: 200px; color: #27ae60; font-weight: bold;">
+        </div>
+
+        <button type="submit" style="padding: 15px 40px; background-color: #27ae60; color: white; border: none; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(39, 174, 96, 0.3);">
+          💾 Tesisi Kaydet
+        </button>
+      </div>
+
+      <div *ngIf="hata" style="margin-top: 20px; padding: 15px; background-color: #f8d7da; color: #721c24; border-radius: 4px; font-weight: bold;">{{ hata }}</div>
+      <div *ngIf="mesaj" style="margin-top: 20px; padding: 15px; background-color: #d4edda; color: #155724; border-radius: 4px; font-weight: bold;">{{ mesaj }}</div>
+
+    </form>
+  </div>
 </div>

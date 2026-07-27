@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema; // Bunu en üste ekle
+﻿using Rental.Entities.Enum;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Rental.Entities.Entity
 {
@@ -6,9 +7,18 @@ namespace Rental.Entities.Entity
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
 
-        // Kuruş hassasiyeti eklendi (Virgülden sonra 2 hane)
+        public string City { get; set; }
+        public string District { get; set; }
+        public string Neighborhood { get; set; }
+        public string AddressDetail { get; set; }
+
+        public string SportType { get; set; }
+        public string SurfaceType { get; set; }
+
+        public FacilityAmenities Amenities { get; set; } = FacilityAmenities.None;
+        public string RentalOptionsJson { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal HourlyPrice { get; set; }
 

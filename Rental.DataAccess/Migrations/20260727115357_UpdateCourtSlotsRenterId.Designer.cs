@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rental.DataAccess.Context;
 
@@ -11,9 +12,11 @@ using Rental.DataAccess.Context;
 namespace Rental.DataAccess.Migrations
 {
     [DbContext(typeof(RentalDbContext))]
-    partial class RentalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727115357_UpdateCourtSlotsRenterId")]
+    partial class UpdateCourtSlotsRenterId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,58 +112,6 @@ namespace Rental.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Courts");
-                });
-
-            modelBuilder.Entity("Rental.Entities.Entity.CourtSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("BasePrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("BufferDurationMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("CloseTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("CourtId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan>("OpenTime")
-                        .HasColumnType("time");
-
-                    b.Property<TimeSpan>("PrimeTimeEnd")
-                        .HasColumnType("time");
-
-                    b.Property<decimal>("PrimeTimePrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<TimeSpan>("PrimeTimeStart")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime>("RecordDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RecordUserCode")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SessionDurationMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CourtSchedules");
                 });
 
             modelBuilder.Entity("Rental.Entities.Entity.CourtSlot", b =>

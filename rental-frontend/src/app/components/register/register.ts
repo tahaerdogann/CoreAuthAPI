@@ -144,6 +144,7 @@ export class RegisterComponent implements OnInit {
         } else {
           this.hata = 'Sunucuya bağlanırken bir hata oluştu.';
         }
+
       }
     });
   }

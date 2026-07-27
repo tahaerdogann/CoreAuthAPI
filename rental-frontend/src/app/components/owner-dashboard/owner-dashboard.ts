@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { OwnerService } from '../../services/owner';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-owner-dashboard',
@@ -11,90 +12,139 @@ import { OwnerService } from '../../services/owner';
   styleUrls: ['./owner-dashboard.css']
 })
 export class OwnerDashboardComponent implements OnInit {
-
   myCourts: any[] = [];
   selectedCourtId: number | null = null;
   courtSlots: any[] = [];
-
-  // Sekme yönetimi (1: Takvim/Ayarlar, 2: Rezervasyonlar)
-  activeTab: number = 1;
-
-  // Yeni İlan Formu
-  slotForm!: FormGroup;
+  scheduleForm: FormGroup;
   mesaj: string = '';
   hata: string = '';
+  isGenerating: boolean = false;
 
-  constructor(private ownerService: OwnerService, private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router, private cdr: ChangeDetectorRef) {
+    // Profesyonel Kurallar Formu
+    this.scheduleForm = this.fb.group({
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required],
+      sessionDurationMinutes: [60, [Validators.required, Validators.min(15), Validators.max(240)]],
+      bufferDurationMinutes: [0, [Validators.required, Validators.min(0), Validators.max(120)]],
+      openTime: ['10:00', Validators.required],
+      closeTime: ['23:59', Validators.required],
+      basePrice: ['', [Validators.required, Validators.min(1)]],
+      primeTimePrice: ['', [Validators.required, Validators.min(1)]],
+      primeTimeStart: ['18:00', Validators.required],
+      primeTimeEnd: ['23:59', Validators.required]
+    });
+  }
 
   ngOnInit() {
-    this.initForm();
     this.loadMyCourts();
   }
 
-  initForm() {
-    this.slotForm = this.fb.group({
-      startTime: ['', Validators.required],
-      endTime: ['', Validators.required],
-      price: ['', [Validators.required, Validators.min(1)]]
-    });
-  }
-
-  // 1. Sahibin sahalarını yükle (Dropdown için)
   loadMyCourts() {
-    this.ownerService.getMyCourts().subscribe({
-      next: (courts) => {
-        this.myCourts = courts;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = { 'Authorization': `Bearer ${token}` };
+
+    this.http.get('https://localhost:7284/api/Courts/my-courts', { headers }).subscribe({
+      next: (res: any) => {
+        if (res && res.$values) {
+          this.myCourts = res.$values;
+        } else if (Array.isArray(res)) {
+          this.myCourts = res;
+        } else {
+          this.myCourts = [];
+        }
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error("Sahalar yüklenemedi", err)
+      error: (err) => console.error("API Hatası:", err)
     });
   }
 
-  // 2. Saha seçildiğinde slotları getir ve sol paneli aç
   onCourtSelected(event: any) {
-    this.selectedCourtId = event.target.value;
+    const value = event.target.value;
+    this.selectedCourtId = value ? Number(value) : null;
+
     if (this.selectedCourtId) {
-      this.loadSlots(this.selectedCourtId);
+      this.loadCourtSlots(this.selectedCourtId);
+      this.mesaj = '';
+      this.hata = '';
     } else {
       this.courtSlots = [];
     }
   }
 
-  loadSlots(courtId: number) {
-    this.ownerService.getCourtSlots(courtId).subscribe({
-      next: (slots) => {
-        this.courtSlots = slots;
+  loadCourtSlots(courtId: number) {
+    this.http.get(`https://localhost:7284/api/Courts/slots/${courtId}`).subscribe({
+      next: (res: any) => {
+        if (res && res.$values) {
+          this.courtSlots = res.$values;
+        } else if (Array.isArray(res)) {
+          this.courtSlots = res;
+        } else {
+          this.courtSlots = [];
+        }
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error("Slotlar yüklenemedi", err)
+      error: (err) => console.error("Slotlar çekilemedi:", err)
     });
   }
 
-  // 3. Sekme Değiştirme
-  switchTab(tabId: number) {
-    this.activeTab = tabId;
-  }
-
-  // 4. Yeni Slot Kaydetme
-  saveSlot() {
-    if (this.slotForm.invalid || !this.selectedCourtId) {
-      this.hata = "Lütfen saha seçin ve tüm alanları (Tarih, Fiyat) doldurun.";
+  generateSchedule() {
+    if (!this.selectedCourtId) {
+      this.hata = 'Lütfen işlem yapmak için bir saha seçin!';
+      return;
+    }
+    if (this.scheduleForm.invalid) {
+      this.hata = 'Lütfen formdaki tüm alanları geçerli şekilde doldurun!';
       return;
     }
 
-    this.mesaj = 'Kaydediliyor...';
+    this.isGenerating = true;
     this.hata = '';
+    this.mesaj = '';
 
-    this.ownerService.createSlot(this.selectedCourtId, this.slotForm.value).subscribe({
-      next: (res) => {
-        this.mesaj = 'Başarıyla oluşturuldu!';
-        this.slotForm.reset();
-        // Listeyi güncelle
-        this.loadSlots(this.selectedCourtId!);
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const formData = this.scheduleForm.value;
+
+    // C# TimeSpan formatı için saatlerin sonuna ":00" ekliyoruz (örn: "10:00" -> "10:00:00")
+    const formatTime = (time: string) => time.length === 5 ? `${time}:00` : time;
+
+    const payload = {
+      courtId: this.selectedCourtId,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      sessionDurationMinutes: formData.sessionDurationMinutes,
+      bufferDurationMinutes: formData.bufferDurationMinutes,
+      openTime: formatTime(formData.openTime),
+      closeTime: formatTime(formData.closeTime),
+      basePrice: formData.basePrice,
+      primeTimePrice: formData.primeTimePrice,
+      primeTimeStart: formatTime(formData.primeTimeStart),
+      primeTimeEnd: formatTime(formData.primeTimeEnd)
+    };
+
+    this.http.post('https://localhost:7284/api/Courts/generate-schedule', payload, { headers }).subscribe({
+      next: (res: any) => {
+        this.mesaj = res.message || 'Takvim başarıyla üretildi!';
+        this.isGenerating = false;
+        this.scheduleForm.reset({
+          sessionDurationMinutes: 60, bufferDurationMinutes: 0,
+          openTime: '10:00', closeTime: '23:59', primeTimeStart: '18:00', primeTimeEnd: '23:59'
+        });
+        // Sağ taraftaki tabloyu güncelliyoruz
+        this.loadCourtSlots(this.selectedCourtId!);
       },
       error: (err) => {
-        this.mesaj = '';
-        this.hata = 'Oluşturulurken hata oluştu.';
-        console.error(err);
+        this.hata = 'Takvim üretilirken bir hata oluştu veya yetkisiz işlem.';
+        console.error("Üretim Hatası:", err);
+        this.isGenerating = false;
       }
     });
+  }
+
+  yeniSahaSayfasinaGit() {
+    this.router.navigate(['/saha-ekle']);
   }
 }

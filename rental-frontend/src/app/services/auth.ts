@@ -7,6 +7,36 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
+  // Token'ı çözümler ve kullanıcının Admin (1) veya Owner (3) olup olmadığını kontrol eder
+  isOwnerOrAdmin(): boolean {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+      const payload = token.split('.')[1];
+      let base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+
+      const decodedPayload = JSON.parse(window.atob(base64));
+      console.log('🚨 1. ÇÖZÜLEN TOKEN İÇERİĞİ:', decodedPayload);
+
+      const roleClaim = decodedPayload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decodedPayload['role'];
+      console.log('🚨 2. OKUNAN ROL DEĞERİ:', roleClaim);
+
+      if (roleClaim == '1' || roleClaim == '3' || roleClaim === 'Admin' || roleClaim === 'Owner') {
+        console.log('✅ 3. YETKİ ONAYLANDI! Kapı açılıyor.');
+        return true;
+      }
+
+      console.log('❌ 3. YETKİ REDDEDİLDİ! Rol uyuşmadı.');
+      return false;
+    } catch (error) {
+      console.error('💥 4. KOD ÇÖKERKEN HATA OLUŞTU:', error);
+      return false;
+    }
+  }
 
   private apiUrl = environment.apiUrl;
 
