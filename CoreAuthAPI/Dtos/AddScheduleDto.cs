@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Rental.Entities.Dtos
@@ -34,5 +34,18 @@ namespace Rental.Entities.Dtos
 
         public TimeSpan PrimeTimeStart { get; set; }
         public TimeSpan PrimeTimeEnd { get; set; }
+
+        // Gelişmiş Ayarlar
+        public List<DayOfWeekConfig>? DaysConfig { get; set; }
+
+        public bool IsAutoScheduleEnabled { get; set; } = false;
+    }
+
+    public class DayOfWeekConfig
+    {
+        public int DayOfWeek { get; set; } // 0 = Sunday, 1 = Monday ... 6 = Saturday
+        public bool IsActive { get; set; }
+        public TimeSpan OpenTime { get; set; }
+        public TimeSpan CloseTime { get; set; }
     }
 }

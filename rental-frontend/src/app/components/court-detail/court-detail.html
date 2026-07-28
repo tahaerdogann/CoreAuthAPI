@@ -1,0 +1,85 @@
+<div style="background-color: #f4f6f9; min-height: 100vh; padding: 40px 20px; font-family: Arial, sans-serif;">
+  <div *ngIf="isLoading" style="text-align: center; font-size: 20px; color: #7f8c8d; padding: 50px;">
+    Yükleniyor...
+  </div>
+
+  <div *ngIf="!isLoading && court" style="max-width: 1000px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap;">
+    
+    <!-- Sol Taraf: Saha Detayları -->
+    <div style="flex: 1; min-width: 300px;">
+      <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+          <div style="width: 60px; height: 60px; background-color: #e8f8f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #1abc9c;">
+            <span *ngIf="court.sportType === 'Futbol'">⚽</span>
+            <span *ngIf="court.sportType === 'Basketbol'">🏀</span>
+            <span *ngIf="court.sportType === 'Tenis'">🎾</span>
+            <span *ngIf="court.sportType === 'Voleybol'">🏐</span>
+            <span *ngIf="!['Futbol', 'Basketbol', 'Tenis', 'Voleybol'].includes(court.sportType)">🏟️</span>
+          </div>
+          <div>
+            <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">{{ court.name }}</h1>
+            <span style="color: #7f8c8d; font-size: 15px;">{{ court.sportType }} - Zemin: {{ court.surfaceType }}</span>
+          </div>
+        </div>
+
+        <div style="color: #34495e; font-size: 15px; margin-bottom: 20px; line-height: 1.5;">
+          <strong>📍 Adres:</strong> {{ court.addressDetail }}, {{ court.neighborhood }}, {{ court.district }} / {{ court.city }}
+        </div>
+
+        <div>
+          <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 15px;">Tesis Olanakları (Amenities)</h3>
+          <p style="color: #7f8c8d; font-style: italic;" *ngIf="!court.amenities">Ekstra bilgi girilmemiş.</p>
+          <p style="color: #34495e; white-space: pre-wrap;" *ngIf="court.amenities">{{ court.amenities }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sağ Taraf: Takvim ve Rezervasyon -->
+    <div style="flex: 1.5; min-width: 400px;">
+      <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <h2 style="margin-top: 0; color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">📅 Müsait Seanslar</h2>
+
+        <div *ngIf="bookingSuccess" style="background-color: #d4edda; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; border: 1px solid #c3e6cb;">
+          ✅ {{ bookingSuccess }}
+        </div>
+
+        <div *ngIf="bookingError" style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; border: 1px solid #f5c6cb;">
+          ❌ {{ bookingError }}
+        </div>
+
+        <div *ngIf="slots.length === 0" style="text-align: center; color: #95a5a6; padding: 30px; font-size: 16px;">
+          Bu saha için henüz üretilmiş bir takvim bulunmuyor.
+        </div>
+
+        <div *ngIf="slots.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; max-height: 500px; overflow-y: auto; padding-right: 10px;">
+          
+          <div *ngFor="let slot of slots" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #fdfdfe; transition: transform 0.2s, box-shadow 0.2s;" [style.border-left]="slot.isBooked ? '4px solid #e74c3c' : '4px solid #2ecc71'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-weight: bold; color: #2c3e50; font-size: 16px;">
+                {{ slot.startTime | date:'HH:mm' }} - {{ slot.endTime | date:'HH:mm' }}
+              </div>
+              <div style="font-size: 12px; color: #7f8c8d; font-weight: bold;">
+                {{ slot.startTime | date:'dd.MM.yyyy' }}
+              </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div style="font-size: 18px; font-weight: bold; color: #d35400;">
+                {{ slot.price }} ₺
+              </div>
+              
+              <button *ngIf="!slot.isBooked" (click)="bookSlot(slot.id)" style="background-color: #2ecc71; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;">
+                KİRALA
+              </button>
+              <button *ngIf="slot.isBooked" disabled style="background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
+                DOLU
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

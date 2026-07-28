@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-saha-ekle',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './saha-ekle.html',
-  styleUrls: ['./saha-ekle.css'] // İçi boş kalabilir
+  styleUrls: ['./saha-ekle.css']
 })
 export class SahaEkleComponent {
   sahaForm: FormGroup;
@@ -36,7 +37,6 @@ export class SahaEkleComponent {
       name: ['', Validators.required],
       sportType: ['Futbol', Validators.required],
       surfaceType: ['Suni Çim', Validators.required],
-      hourlyPrice: [null, [Validators.required, Validators.min(1)]],
       city: ['', Validators.required],
       district: ['', Validators.required],
       neighborhood: ['', Validators.required],
@@ -51,7 +51,6 @@ export class SahaEkleComponent {
         krampon: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
         ayakkabi: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
         yelek: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
-        kaleci: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
         hakem: this.fb.group({ isActive: [false], availableCount: [1], unitPrice: [0] })
       })
     });
@@ -100,13 +99,15 @@ export class SahaEkleComponent {
     const payload = {
       name: formData.name, sportType: formData.sportType, surfaceType: formData.surfaceType,
       city: formData.city, district: formData.district, neighborhood: formData.neighborhood,
-      addressDetail: formData.addressDetail, hourlyPrice: formData.hourlyPrice,
+      addressDetail: formData.addressDetail, hourlyPrice: 0, // Kaldırıldı, 0 gönderiyoruz
       amenities: this.calculateBitwiseAmenities(formData.amenities),
       rentalOptionsJson: JSON.stringify(formData.rentalOptions)
     };
 
-    // DİKKAT: 7284 portunu kendi backend portunla değiştirmeyi unutma!
-    this.http.post('https://localhost:7284/api/Courts/add', payload).subscribe({
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+
+    this.http.post(`${environment.apiUrl}/Courts/add`, payload, { headers }).subscribe({
       next: (res: any) => {
         this.mesaj = res.message || 'Saha başarıyla eklendi!';
         setTimeout(() => { this.router.navigate(['/owner-dashboard']); }, 1500);

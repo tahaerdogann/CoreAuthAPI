@@ -3,9 +3,10 @@ import { inject } from '@angular/core';
 import { Login } from './components/login/login';
 import { RegisterComponent } from './components/register/register';
 import { Dashboard } from './components/dashboard/dashboard';
+import { CourtDetailComponent } from './components/court-detail/court-detail';
 import { AuthService } from './services/auth';
 import { OwnerDashboardComponent } from './components/owner-dashboard/owner-dashboard';
-import { SahaEkleComponent } from './components/saha-ekle/saha-ekle'; // BU İMPORTUN OLDUĞUNA EMİN OL!
+import { SahaEkleComponent } from './components/saha-ekle/saha-ekle';
 
 // ... (Guard fonksiyonları aynen kalıyor: guestGuard, authGuard, ownerGuard) ...
 
@@ -31,6 +32,7 @@ export const routes: Routes = [
 
   // 2. Herkesin Girebildiği Sayfalar
   { path: 'dashboard', component: Dashboard },
+  { path: 'court-detail/:id', component: CourtDetailComponent },
 
   // 3. VIP SAYFALAR (Patronlara Özel)
   { path: 'owner-dashboard', component: OwnerDashboardComponent, canActivate: [ownerGuard] },

@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth';
 
 @Component({
@@ -9,11 +9,20 @@ import { AuthService } from '../../services/auth';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class Login {
+export class Login implements OnInit {
   email = '';
   password = '';
+  returnUrl: string = '/dashboard';
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
+
+  ngOnInit() {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+  }
 
   girisYap() {
     const loginData = {
@@ -24,12 +33,8 @@ export class Login {
     this.authService.login(loginData).subscribe({
       next: (response: any) => {
         console.log("Backend'den Gelen Cevap:", response);
-
-        // Bilet (Token) cebe atılıyor
         localStorage.setItem('token', response.token);
-
-        // Dashboard'a yönlendirme yapılıyor
-        this.router.navigate(['/dashboard']);
+        this.router.navigateByUrl(this.returnUrl);
       },
        error: (err: any) => {
         console.error("Hata Oluştu:", err);

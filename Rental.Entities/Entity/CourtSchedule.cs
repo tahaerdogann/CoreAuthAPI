@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -35,5 +35,11 @@ namespace Rental.Entities.Entity
         // 🔒 Sistem Kayıt Bilgileri
         public DateTime RecordDate { get; set; } = DateTime.Now;
         public int RecordUserCode { get; set; }
+
+        // 🌟 5. KURAL: Gelişmiş Esnek Kurallar (Haftanın günleri, istisnalar vb.)
+        public string AdvancedRulesJson { get; set; } = string.Empty;
+
+        // 🤖 6. KURAL: Otomatik Uzatma (Döngü)
+        public bool IsAutoScheduleEnabled { get; set; } = false;
     }
 }

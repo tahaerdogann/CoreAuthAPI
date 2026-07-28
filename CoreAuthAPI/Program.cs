@@ -1,4 +1,4 @@
-﻿using Rental.DataAccess.Context;
+using Rental.DataAccess.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -44,6 +44,7 @@ builder.Services.AddCors(options =>
 });
 // Ve app.UseCors("AllowAll"); satırı ekli olmalı.
 builder.Services.AddControllers();
+builder.Services.AddHostedService<CoreAuthAPI.Services.AutoScheduleWorker>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

@@ -1,29 +1,33 @@
-<!-- Üst Menü (Navbar) -->
-<nav style="background-color: #2c3e50; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: sans-serif;">
-
-  <!-- Logo / Marka -->
-  <div>
-    <h2 style="margin: 0; font-size: 24px; color: #18bc9c;">Saha Kiralama Sistemi</h2>
+<nav style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); font-family: 'Inter', sans-serif;">
+  
+  <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" routerLink="/">
+    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
+      ⚽
+    </div>
+    <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px;">Saha<span style="color: #10b981;">Kirala</span></h2>
   </div>
 
-  <!-- Menü Butonları -->
-  <div>
-    <!-- Kullanıcı GİRİŞ YAPMAMIŞSA görünecek butonlar -->
+  <div style="display: flex; gap: 16px; align-items: center;">
+    <a routerLink="/" style="color: #475569; text-decoration: none; font-weight: 500; font-size: 15px; padding: 8px 12px; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.color='#10b981'; this.style.backgroundColor='#f0fdf4'" onmouseout="this.style.color='#475569'; this.style.backgroundColor='transparent'">Sahalar</a>
+    
     <ng-container *ngIf="!authService.isLoggedIn()">
-      <a href="/login" style="color: white; text-decoration: none; font-weight: bold; background-color: #007bff; padding: 8px 15px; border-radius: 5px;">Giriş Yap</a>
+      <a routerLink="/login" style="color: white; text-decoration: none; font-weight: 600; font-size: 15px; background: linear-gradient(135deg, #3b82f6, #2563eb); padding: 10px 24px; border-radius: 8px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'">Giriş Yap / Üye Ol</a>
     </ng-container>
-    <!-- Kullanıcı GİRİŞ YAPMIŞSA görünecek butonlar -->
-    <ng-container *ngIf="authService.isLoggedIn()">
 
-      <button (click)="cikisYap()" style="background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">
+    <ng-container *ngIf="authService.isLoggedIn()">
+      <a routerLink="/owner-dashboard" style="color: #475569; text-decoration: none; font-weight: 500; font-size: 15px; padding: 8px 12px; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.color='#10b981'; this.style.backgroundColor='#f0fdf4'" onmouseout="this.style.color='#475569'; this.style.backgroundColor='transparent'">Panelim</a>
+      <a routerLink="/saha-ekle" style="color: #475569; text-decoration: none; font-weight: 500; font-size: 15px; padding: 8px 12px; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.color='#10b981'; this.style.backgroundColor='#f0fdf4'" onmouseout="this.style.color='#475569'; this.style.backgroundColor='transparent'">Yeni Saha Ekle</a>
+      
+      <div style="width: 1px; height: 24px; background-color: #e2e8f0; margin: 0 8px;"></div>
+      
+      <button (click)="cikisYap()" style="background: transparent; border: 1px solid #fee2e2; color: #ef4444; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#fef2f2'; this.style.borderColor='#f87171'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#fee2e2'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         Çıkış Yap
       </button>
     </ng-container>
   </div>
-
 </nav>
 
-<!-- Sayfa İçeriklerinin Yükleneceği Alan -->
-<main style="padding: 20px; min-height: 80vh; background-color: #f8f9fa;">
+<main style="background-color: #f8fafc; min-height: calc(100vh - 73px); font-family: 'Inter', sans-serif;">
   <router-outlet></router-outlet>
 </main>
