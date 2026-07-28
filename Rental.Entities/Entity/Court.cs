@@ -1,4 +1,4 @@
-﻿using Rental.Entities.Enum;
+using Rental.Entities.Enum;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Rental.Entities.Entity
@@ -6,18 +6,18 @@ namespace Rental.Entities.Entity
     public class Court
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public string City { get; set; }
-        public string District { get; set; }
-        public string Neighborhood { get; set; }
-        public string AddressDetail { get; set; }
+        public string City { get; set; } = string.Empty;
+        public string District { get; set; } = string.Empty;
+        public string Neighborhood { get; set; } = string.Empty;
+        public string AddressDetail { get; set; } = string.Empty;
 
-        public string SportType { get; set; }
-        public string SurfaceType { get; set; }
+        public string SportType { get; set; } = string.Empty;
+        public string SurfaceType { get; set; } = string.Empty;
 
         public FacilityAmenities Amenities { get; set; } = FacilityAmenities.None;
-        public string RentalOptionsJson { get; set; }
+        public string RentalOptionsJson { get; set; } = string.Empty;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal HourlyPrice { get; set; }

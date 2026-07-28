@@ -1,4 +1,4 @@
-﻿using Rental.DataAccess.Context;
+using Rental.DataAccess.Context;
 using Rental.Entities.Entity;
 using Rental.Entities.Enum;
 using CoreAuthAPI.Dtos;
@@ -27,6 +27,12 @@ namespace CoreAuthAPI.Controllers
         [HttpPost("register")]
         public IActionResult Register(UserDto request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest("Email alanı zorunludur.");
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Şifre alanı zorunludur.");
+
             if (_context.Users.Any(u => u.Email == request.Email))
                 return BadRequest("Bu email adresi zaten mevcut.");
 
@@ -36,10 +42,10 @@ namespace CoreAuthAPI.Controllers
             // Dinamik DTO verilerini kullanıyoruz
             var user = new User
             {
-                Name = request.Name,
-                Surname = request.Surname,
+                Name = request.Name ?? "",
+                Surname = request.Surname ?? "",
                 PhoneNumber = request.PhoneNumber ?? "", // null gelirse boş string at
-                Email = request.Email ?? "",
+                Email = request.Email,
                 PasswordHash = hashedPassword,
                 Type = UserRoles.Customer,
                 Status = UserStatus.Active,
@@ -59,6 +65,9 @@ namespace CoreAuthAPI.Controllers
         [HttpPost("login")]
         public IActionResult Login(UserDto request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("E-posta veya şifre boş olamaz.");
+
             // 1. E-posta sistemde var mı?
             var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
             if (user == null)
