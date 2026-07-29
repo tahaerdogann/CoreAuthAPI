@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,7 +24,8 @@ export class RegisterComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -90,6 +91,7 @@ export class RegisterComponent implements OnInit {
           this.emailAlinmisMi = false;
           this.currentStep++;
         }
+        this.cdr.detectChanges();
       });
     }
     else {
@@ -144,7 +146,7 @@ export class RegisterComponent implements OnInit {
         } else {
           this.hata = 'Sunucuya bağlanırken bir hata oluştu.';
         }
-
+        this.cdr.detectChanges();
       }
     });
   }

@@ -1,108 +1,28 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { CourtFormComponent } from '../shared/court-form.component';
 
 @Component({
   selector: 'app-saha-ekle',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, CourtFormComponent],
   templateUrl: './saha-ekle.html',
   styleUrls: ['./saha-ekle.css']
 })
 export class SahaEkleComponent {
-  sahaForm: FormGroup;
   mesaj: string = '';
   hata: string = '';
+  isSubmitting = false;
 
-  sehirler = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya'];
-  ilceler: { [key: string]: string[] } = {
-    'İstanbul': ['Kadıköy', 'Beşiktaş', 'Şişli', 'Üsküdar', 'Maltepe'],
-    'Ankara': ['Çankaya', 'Keçiören', 'Yenimahalle'],
-    'İzmir': ['Karşıyaka', 'Bornova', 'Buca']
-  };
-  mahalleler: { [key: string]: string[] } = {
-    'Kadıköy': ['Caferağa', 'Moda', 'Fenerbahçe', 'Bostancı'],
-    'Beşiktaş': ['Bebek', 'Levent', 'Etiler'],
-    'Çankaya': ['Kızılay', 'Bahçelievler', 'Çayyolu']
-  };
+  constructor(private http: HttpClient, private router: Router) {}
 
-  aktifIlceler: string[] = [];
-  aktifMahalleler: string[] = [];
-
-  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router) {
-    this.sahaForm = this.fb.group({
-      name: ['', Validators.required],
-      sportType: ['Futbol', Validators.required],
-      surfaceType: ['Suni Çim', Validators.required],
-      city: ['', Validators.required],
-      district: ['', Validators.required],
-      neighborhood: ['', Validators.required],
-      addressDetail: [''],
-      amenities: this.fb.group({
-        restroom: [false], cafeteria: [false], disabledAccess: [false],
-        changingRoom: [false], wifi: [false], shower: [false],
-        locker: [false], grandstand: [false], airConditioning: [false],
-        prayerRoom: [false], lighting: [false]
-      }),
-      rentalOptions: this.fb.group({
-        krampon: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
-        ayakkabi: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
-        yelek: this.fb.group({ isActive: [false], availableCount: [0], unitPrice: [0] }),
-        hakem: this.fb.group({ isActive: [false], availableCount: [1], unitPrice: [0] })
-      })
-    });
-  }
-
-  onCityChange(event: any) {
-    const selectedCity = event.target.value;
-    this.aktifIlceler = this.ilceler[selectedCity] || [];
-    this.sahaForm.patchValue({ district: '', neighborhood: '' });
-    this.aktifMahalleler = [];
-  }
-
-  onDistrictChange(event: any) {
-    const selectedDistrict = event.target.value;
-    this.aktifMahalleler = this.mahalleler[selectedDistrict] || [];
-    this.sahaForm.patchValue({ neighborhood: '' });
-  }
-
-  get isFootball(): boolean { return this.sahaForm.get('sportType')?.value === 'Futbol'; }
-
-  calculateBitwiseAmenities(ag: any): number {
-    let total = 0;
-    if (ag.restroom) total += 1;
-    if (ag.cafeteria) total += 2;
-    if (ag.disabledAccess) total += 4;
-    if (ag.changingRoom) total += 8;
-    if (ag.wifi) total += 16;
-    if (ag.shower) total += 32;
-    if (ag.locker) total += 64;
-    if (ag.grandstand) total += 128;
-    if (ag.airConditioning) total += 256;
-    if (ag.prayerRoom) total += 512;
-    if (ag.lighting) total += 1024;
-    return total;
-  }
-
-  kaydet() {
-    if (this.sahaForm.invalid) {
-      this.hata = 'Lütfen zorunlu alanları doldurun.'; return;
-    }
-
+  onFormSubmit(payload: any) {
     this.hata = '';
     this.mesaj = 'Saha kaydediliyor...';
-    const formData = this.sahaForm.value;
-
-    const payload = {
-      name: formData.name, sportType: formData.sportType, surfaceType: formData.surfaceType,
-      city: formData.city, district: formData.district, neighborhood: formData.neighborhood,
-      addressDetail: formData.addressDetail, hourlyPrice: 0, // Kaldırıldı, 0 gönderiyoruz
-      amenities: this.calculateBitwiseAmenities(formData.amenities),
-      rentalOptionsJson: JSON.stringify(formData.rentalOptions)
-    };
+    this.isSubmitting = true;
 
     const token = localStorage.getItem('token');
     const headers = { 'Authorization': `Bearer ${token}` };
@@ -110,9 +30,14 @@ export class SahaEkleComponent {
     this.http.post(`${environment.apiUrl}/Courts/add`, payload, { headers }).subscribe({
       next: (res: any) => {
         this.mesaj = res.message || 'Saha başarıyla eklendi!';
+        this.isSubmitting = false;
         setTimeout(() => { this.router.navigate(['/owner-dashboard']); }, 1500);
       },
-      error: (err) => { this.mesaj = ''; this.hata = 'Saha eklenirken hata oluştu.'; }
+      error: (err) => { 
+        this.mesaj = ''; 
+        this.hata = err.error?.message || 'Saha eklenirken hata oluştu.';
+        this.isSubmitting = false;
+      }
     });
   }
 }

@@ -1,4 +1,4 @@
-<div class="dashboard-container" style="padding: 20px; font-family: 'Inter', sans-serif; background-color: #f8fafc; min-height: 100vh;">
+<div class="dashboard-container" style="padding: 20px; font-family: 'Inter', sans-serif; background-color: #f8fafc; min-height: 100vh; position: relative;">
 
   <div class="content" style="display: flex; gap: 24px; flex-wrap: wrap;">
 
@@ -17,10 +17,16 @@
         </select>
       </div>
 
-      <!-- Yeni Saha Ekle Butonu -->
-      <div style="margin-bottom: 30px;">
-        <button (click)="yeniSahaSayfasinaGit()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.2)'">
-          + Yeni Bir Saha Daha Ekle
+      <!-- İşlem Butonları (Saha Ekle / Düzenle / Sil) -->
+      <div style="margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button (click)="yeniSahaSayfasinaGit()" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+          + Saha Ekle
+        </button>
+        <button (click)="openEditModal()" [disabled]="!selectedCourtId" [style.opacity]="!selectedCourtId ? '0.5' : '1'" [style.cursor]="!selectedCourtId ? 'not-allowed' : 'pointer'" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);" onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="if(!this.disabled) this.style.transform='translateY(0)'">
+          Sahayı Düzenle
+        </button>
+        <button (click)="deleteCourtPrompt()" [disabled]="!selectedCourtId" [style.opacity]="!selectedCourtId ? '0.5' : '1'" [style.cursor]="!selectedCourtId ? 'not-allowed' : 'pointer'" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="if(!this.disabled) this.style.transform='translateY(0)'">
+          Sahayı Sil
         </button>
       </div>
 
@@ -28,8 +34,8 @@
       <div *ngIf="selectedCourtId; else selectWarning" style="background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
         <h4 style="margin-top: 0; color: #3b82f6; margin-bottom: 20px; font-weight: 700;">Otomatik Takvim Oluşturucu</h4>
 
-        <div *ngIf="hasActiveSchedule" style="background: #fffbeb; color: #b45309; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 20px; font-size: 14px; font-weight: 500;">
-          ⚠️ Bu sahanın halihazırda üretilmiş bir takvimi bulunuyor. Yeniden üretim yapmadan önce mevcut takvimi (sağdaki panelden) iptal etmeniz gerekir.
+        <div *ngIf="hasEmptySlots" style="background: #fffbeb; color: #b45309; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 20px; font-size: 14px; font-weight: 500;">
+          Bu sahanın halihazırda müsait seansları bulunuyor. Yeniden üretim yapmadan önce mevcut takvimi iptal etmeniz gerekir.
         </div>
 
         <form [formGroup]="scheduleForm" (ngSubmit)="generateSchedule()" style="display: flex; flex-direction: column; gap: 24px;">
@@ -40,17 +46,17 @@
             <div style="display: flex; gap: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Başlangıç Tarihi</label>
-                <input type="date" formControlName="startDate" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="date" formControlName="startDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Bitiş Tarihi</label>
-                <input type="date" formControlName="endDate" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="date" formControlName="endDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
             </div>
             
             <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" [(ngModel)]="isAutoScheduleEnabled" [ngModelOptions]="{standalone: true}" [disabled]="hasActiveSchedule" id="autoSchedule" style="width: 16px; height: 16px; cursor: pointer;">
-              <label for="autoSchedule" style="font-size: 14px; font-weight: 600; color: #475569; cursor: pointer;">🔄 Otomatik Döngü (Seçili kurallar bitiş tarihinden sonra her gün otomatik olarak 1 gün uzatılsın)</label>
+              <input type="checkbox" [(ngModel)]="isAutoScheduleEnabled" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" id="autoSchedule" style="width: 16px; height: 16px; cursor: pointer;">
+              <label for="autoSchedule" style="font-size: 14px; font-weight: 600; color: #475569; cursor: pointer;">🔄 Otomatik Uzatma (her yeni gün bitiş tarihine otomatik 1 gün eklenir)</label>
             </div>
           </div>
 
@@ -63,16 +69,16 @@
               <div *ngFor="let day of daysConfig" style="display: flex; gap: 12px; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                 <div style="flex: 0 0 110px;">
                   <label style="font-size: 13px; font-weight: 600; cursor: pointer; color: #334155;">
-                    <input type="checkbox" [(ngModel)]="day.isActive" [ngModelOptions]="{standalone: true}" [disabled]="hasActiveSchedule" style="margin-right: 6px;">
+                    <input type="checkbox" [(ngModel)]="day.isActive" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="margin-right: 6px;">
                     {{ day.name }}
                   </label>
                 </div>
                 <div style="flex: 1;" *ngIf="day.isActive">
-                  <input type="time" [(ngModel)]="day.openTime" [ngModelOptions]="{standalone: true}" [disabled]="hasActiveSchedule" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <input type="time" [(ngModel)]="day.openTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 </div>
                 <div style="flex: 0 0 20px; text-align: center; color: #94a3b8;" *ngIf="day.isActive">-</div>
                 <div style="flex: 1;" *ngIf="day.isActive">
-                  <input type="time" [(ngModel)]="day.closeTime" [ngModelOptions]="{standalone: true}" [disabled]="hasActiveSchedule" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <input type="time" [(ngModel)]="day.closeTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 </div>
                 <div style="flex: 2; text-align: center; color: #ef4444; font-size: 13px; font-weight: 700;" *ngIf="!day.isActive">
                   Kapalı
@@ -83,11 +89,11 @@
             <div style="display: flex; gap: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Seans Süresi (Dakika)</label>
-                <input type="number" formControlName="sessionDurationMinutes" placeholder="Örn: 60" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="number" formControlName="sessionDurationMinutes" placeholder="Örn: 60" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Tampon Boşluk (Dakika)</label>
-                <input type="number" formControlName="bufferDurationMinutes" placeholder="Örn: 15" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="number" formControlName="bufferDurationMinutes" placeholder="Örn: 15" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
             </div>
           </div>
@@ -99,49 +105,49 @@
             <div style="display: flex; gap: 20px; margin-bottom: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Gündüz/Normal Fiyat (₺)</label>
-                <input type="number" formControlName="basePrice" placeholder="Örn: 500" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="number" formControlName="basePrice" placeholder="Örn: 500" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #ea580c; margin-bottom: 6px; display: block;">Altın Saatler Fiyatı (₺)</label>
-                <input type="number" formControlName="primeTimePrice" placeholder="Örn: 1000" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #f97316; border-radius: 6px; outline: none; background: #fff7ed;">
+                <input type="number" formControlName="primeTimePrice" placeholder="Örn: 1000" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #f97316; border-radius: 6px; outline: none; background: #fff7ed;">
               </div>
             </div>
 
             <div style="display: flex; gap: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Prime-Time Başlangıç</label>
-                <input type="time" formControlName="primeTimeStart" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="time" formControlName="primeTimeStart" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Prime-Time Bitiş</label>
-                <input type="time" formControlName="primeTimeEnd" [attr.disabled]="hasActiveSchedule ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <input type="time" formControlName="primeTimeEnd" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
               </div>
             </div>
           </div>
 
-          <button type="submit" [disabled]="isGenerating || hasActiveSchedule || scheduleForm.invalid" 
-                  [style.opacity]="(isGenerating || hasActiveSchedule || scheduleForm.invalid) ? '0.5' : '1'"
-                  [style.cursor]="(isGenerating || hasActiveSchedule || scheduleForm.invalid) ? 'not-allowed' : 'pointer'"
+          <button type="submit" [disabled]="isGenerating || hasEmptySlots || scheduleForm.invalid" 
+                  [style.opacity]="(isGenerating || hasEmptySlots || scheduleForm.invalid) ? '0.5' : '1'"
+                  [style.cursor]="(isGenerating || hasEmptySlots || scheduleForm.invalid) ? 'not-allowed' : 'pointer'"
                   style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 700; font-size: 16px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
-            {{ isGenerating ? '⚙️ Takvim Üretiliyor...' : '🚀 Takvimi Oluştur ve Satışa Aç' }}
+            {{ isGenerating ? 'Takvim Üretiliyor...' : 'Takvimi Oluştur ve Satışa Aç' }}
           </button>
         </form>
 
         <!-- Hata Listesi (Örn: Çakışmalar) -->
         <div *ngIf="hataListesi && hataListesi.length > 0" style="background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 8px; margin-top: 20px;">
-          <h5 style="margin: 0 0 10px 0; color: #dc2626; font-size: 14px;">⚠️ Bazı Seanslar Üretilemedi:</h5>
+          <h5 style="margin: 0 0 10px 0; color: #dc2626; font-size: 14px;">Bazı Seanslar Çakışma Nedeniyle Üretilemedi:</h5>
           <ul style="margin: 0; padding-left: 20px; color: #b91c1c; font-size: 13px;">
             <li *ngFor="let h of hataListesi" style="margin-bottom: 4px;">{{ h }}</li>
           </ul>
         </div>
 
-        <p *ngIf="mesaj" style="color: #15803d; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-top: 20px; font-size: 15px; text-align: center; font-weight: 600;">✅ {{ mesaj }}</p>
-        <p *ngIf="hata" style="color: #b91c1c; background-color: #fef2f2; border: 1px solid #fecaca; padding: 14px; border-radius: 8px; margin-top: 20px; font-size: 15px; text-align: center; font-weight: 600;">❌ {{ hata }}</p>
+        <p *ngIf="mesaj" style="color: #15803d; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin-top: 20px; font-size: 15px; text-align: center; font-weight: 600;">{{ mesaj }}</p>
+        <p *ngIf="hata" style="color: #b91c1c; background-color: #fef2f2; border: 1px solid #fecaca; padding: 14px; border-radius: 8px; margin-top: 20px; font-size: 15px; text-align: center; font-weight: 600;">{{ hata }}</p>
       </div>
 
       <ng-template #selectWarning>
         <div style="background-color: #f8fafc; color: #475569; padding: 30px; border-radius: 12px; border: 2px dashed #cbd5e1; text-align: center; font-size: 16px; margin-top: 25px; font-weight: 500;">
-          👈 Kuralları belirlemek ve takvim üretmek için lütfen yukarıdan bir saha seçin.
+         Kuralları belirlemek ve takvim üretmek için lütfen yukarıdan bir saha seçin.
         </div>
       </ng-template>
     </div>
@@ -157,12 +163,9 @@
       </div>
 
       <!-- Aksiyon Butonları -->
-      <div *ngIf="hasActiveSchedule" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div *ngIf="courtSlots.length > 0" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
         <button (click)="cancelSchedule()" style="background: transparent; color: #ef4444; border: 1px solid #fca5a5; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
-          🗑️ Takvimlendirmeyi İptal Et (Tüm Boş Seansları Sil)
-        </button>
-        <button (click)="deleteCourt()" style="background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
-          ⚠️ SAHAYI SİSTEMDEN TAMAMEN SİL
+          Takvimi İptal Et
         </button>
       </div>
 
@@ -187,7 +190,7 @@
               {{ (slot.isBooked || slot.IsBooked) ? 'Dolu' : 'Müsait' }}
             </span>
             <button (click)="toggleSlot(slot.id || slot.Id)" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
-              {{ (slot.isBooked || slot.IsBooked) ? 'İptal Et / Aç' : 'Manuel Kapat' }}
+              {{ (slot.isBooked || slot.IsBooked) ? 'İptal Et / Aç' : 'Kapat' }}
             </button>
           </div>
 
@@ -203,4 +206,71 @@
     </div>
 
   </div>
+
+  <!-- CUSTOM MODALS -->
+
+  <!-- Modal Overlay (Alert / Confirm) -->
+  <div *ngIf="alertModal.isOpen || confirmModal.isOpen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    
+    <!-- Alert Box -->
+    <div *ngIf="alertModal.isOpen" style="background: white; width: 400px; max-width: 90%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden; animation: popup 0.3s ease-out;">
+      <div style="padding: 24px;">
+        <h3 style="margin: 0 0 12px 0; color: #1e293b; font-size: 18px; font-weight: 700;">{{ alertModal.title }}</h3>
+        <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.5;">{{ alertModal.message }}</p>
+      </div>
+      <div style="background: #f8fafc; padding: 16px 24px; text-align: right; border-top: 1px solid #e2e8f0;">
+        <button (click)="closeAlert()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">Tamam</button>
+      </div>
+    </div>
+
+    <!-- Confirm Box -->
+    <div *ngIf="confirmModal.isOpen" style="background: white; width: 400px; max-width: 90%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden; animation: popup 0.3s ease-out;">
+      <div style="padding: 24px;">
+        <h3 style="margin: 0 0 12px 0; color: #1e293b; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;"> {{ confirmModal.title }}
+        </h3>
+        <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.5;">{{ confirmModal.message }}</p>
+      </div>
+      <div style="background: #f8fafc; padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0;">
+        <button (click)="closeConfirm()" style="background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">Vazgeç</button>
+        <button (click)="onConfirmAction()" [style.background]="confirmModal.isDanger ? '#ef4444' : '#3b82f6'" style="color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">Evet, Onaylıyorum</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT COURT FULL SCREEN MODAL -->
+  <div *ngIf="isEditModalOpen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); z-index: 900; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); overflow-y: auto; padding: 40px 20px;">
+    <div style="background: white; width: 100%; max-width: 900px; border-radius: 16px; overflow: hidden; position: relative; animation: slideDown 0.3s ease-out; margin: auto;">
+      
+      <div style="background: #f8fafc; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: 700;">Sahayı Düzenle</h2>
+        <button (click)="closeEditModal()" style="background: transparent; border: none; font-size: 24px; color: #64748b; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="padding: 30px; max-height: calc(100vh - 150px); overflow-y: auto;">
+        <!-- Shared Form Component for Editing -->
+        <app-court-form
+          *ngIf="selectedCourtData"
+          [initialData]="selectedCourtData"
+          [isSubmitting]="isUpdatingCourt"
+          [showCancel]="true"
+          submitLabel="Değişiklikleri Güncelle"
+          (formSubmit)="onEditCourtSubmit($event)"
+          (formCancel)="closeEditModal()">
+        </app-court-form>
+      </div>
+      
+    </div>
+  </div>
+
 </div>
+
+<style>
+  @keyframes popup {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

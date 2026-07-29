@@ -89,7 +89,24 @@ namespace CoreAuthAPI.Controllers
                 query = query.Where(c => c.SportType == sportType);
             }
 
-            var results = query.ToList();
+            var results = query.Select(c => new {
+                c.Id,
+                c.Name,
+                c.SportType,
+                c.SurfaceType,
+                c.City,
+                c.District,
+                c.Neighborhood,
+                c.AddressDetail,
+                HourlyPrice = _context.CourtSlots
+                                .Where(s => s.CourtId == c.Id && !s.IsBooked && s.StartTime >= DateTime.Now)
+                                .Min(s => (decimal?)s.Price) ?? 0,
+                c.Amenities,
+                c.RentalOptionsJson,
+                c.OwnerId,
+                c.IsActive
+            }).ToList();
+
             return Ok(results);
         }
 
@@ -214,7 +231,7 @@ namespace CoreAuthAPI.Controllers
             }
 
             return Ok(new { 
-                message = $"Sistem {newSlots.Count} adet yeni seansı başarıyla üretti!",
+                message = $"{newSlots.Count} adet yeni seans başarıyla üretildi",
                 errors = conflictErrors 
             });
         }
@@ -315,6 +332,33 @@ namespace CoreAuthAPI.Controllers
             
             _context.SaveChanges();
             return Ok(new { message = "Saha ve tüm boş takvimleri başarıyla silindi." });
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult UpdateCourt(int id, [FromBody] AddCourtDto request)
+        {
+            var court = _context.Courts.FirstOrDefault(c => c.Id == id);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (court == null) return NotFound("Saha bulunamadı.");
+            if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
+                return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
+
+            court.Name = request.Name;
+            court.SportType = request.SportType;
+            court.SurfaceType = request.SurfaceType;
+            court.City = request.City;
+            court.District = request.District;
+            court.Neighborhood = request.Neighborhood;
+            court.AddressDetail = request.AddressDetail;
+            court.HourlyPrice = request.HourlyPrice;
+            court.Amenities = request.Amenities;
+            court.RentalOptionsJson = request.RentalOptionsJson ?? "{}";
+
+            _context.SaveChanges();
+            return Ok(new { message = "Saha bilgileri başarıyla güncellendi!" });
         }
     }
 }

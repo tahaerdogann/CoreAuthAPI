@@ -1,140 +1,26 @@
-<div style="background-color: #f8f9fa; min-height: 100vh; padding: 40px 20px; font-family: 'Inter', sans-serif;">
-  <div style="max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); overflow: hidden;">
+<div class="page-container">
+  <div class="form-wrapper">
     
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #2c3e50, #34495e); padding: 30px 40px; color: white;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Yeni Saha Ekle</h1>
-      <p style="margin: 8px 0 0 0; color: #cbd5e1; font-size: 15px;">Tesisinizi sisteme kaydederek kiralama almaya hemen başlayın.</p>
+    <div class="header-section">
+      <h2 class="page-title">Sisteme Yeni Saha Ekle</h2>
+      <p class="page-subtitle">Tesisinizi ve kiralama şartlarını detaylıca tanımlayın. Girdiğiniz bilgiler kullanıcıların arama sonuçlarında görünür.</p>
     </div>
 
-    <!-- Form -->
-    <form [formGroup]="sahaForm" (ngSubmit)="kaydet()" style="padding: 40px;">
-      
-      <!-- Temel Bilgiler -->
-      <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">1. Temel Bilgiler</h3>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">Saha/Tesis Adı</label>
-          <input type="text" formControlName="name" placeholder="Örn: Merkez Spor Kompleksi" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#cbd5e1'">
-        </div>
-        
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">Spor Türü</label>
-          <select formControlName="sportType" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; background: white;">
-            <option value="Futbol">Futbol</option>
-            <option value="Basketbol">Basketbol</option>
-            <option value="Tenis">Tenis</option>
-            <option value="Voleybol">Voleybol</option>
-          </select>
-        </div>
+    <!-- HATA VE MESAJ KUTULARI -->
+    <div *ngIf="hata" class="alert-box error-box">
+      ⚠️ {{ hata }}
+    </div>
+    
+    <div *ngIf="mesaj" class="alert-box success-box">
+      ✅ {{ mesaj }}
+    </div>
 
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">Zemin Türü</label>
-          <select formControlName="surfaceType" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; background: white;">
-            <option value="Suni Çim">Suni Çim</option>
-            <option value="Doğal Çim">Doğal Çim</option>
-            <option value="Parke">Parke</option>
-            <option value="Akrilik">Akrilik</option>
-            <option value="Toprak">Toprak</option>
-          </select>
-        </div>
-      </div>
+    <!-- SHARED COURT FORM -->
+    <app-court-form 
+      (formSubmit)="onFormSubmit($event)"
+      [isSubmitting]="isSubmitting"
+      submitLabel="Sahayı Sisteme Kaydet">
+    </app-court-form>
 
-      <!-- Konum Bilgileri -->
-      <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">2. Konum Bilgileri</h3>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">İl</label>
-          <select formControlName="city" (change)="onCityChange($event)" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; background: white;">
-            <option value="">Seçiniz...</option>
-            <option *ngFor="let s of sehirler" [value]="s">{{s}}</option>
-          </select>
-        </div>
-        
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">İlçe</label>
-          <select formControlName="district" (change)="onDistrictChange($event)" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; background: white;">
-            <option value="">Seçiniz...</option>
-            <option *ngFor="let ilce of aktifIlceler" [value]="ilce">{{ilce}}</option>
-          </select>
-        </div>
-
-        <div>
-          <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">Mahalle</label>
-          <select formControlName="neighborhood" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; background: white;">
-            <option value="">Seçiniz...</option>
-            <option *ngFor="let mahalle of aktifMahalleler" [value]="mahalle">{{mahalle}}</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px;">Açık Adres (Sokak, Bina No vb.)</label>
-        <textarea formControlName="addressDetail" rows="2" placeholder="Örn: Atatürk Caddesi, 3. Sokak No:12" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; font-family: inherit; resize: vertical;"></textarea>
-      </div>
-
-      <!-- Tesis İmkânları -->
-      <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">3. Tesis Olanakları (Amenities)</h3>
-      
-      <div formGroupName="amenities" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="restroom"> WC / Lavabo</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="cafeteria"> Kafe / Büfe</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="disabledAccess"> Engelli Erişimi</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="changingRoom"> Soyunma Odası</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="wifi"> Ücretsiz Wi-Fi</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="shower"> Duş</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="locker"> Kilitli Dolap</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="grandstand"> Tribün</label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569;"><input type="checkbox" formControlName="lighting"> Gece Aydınlatması</label>
-      </div>
-
-      <!-- Ekstra Kiralama Seçenekleri -->
-      <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">4. Ekstra Kiralama Seçenekleri</h3>
-      
-      <div formGroupName="rentalOptions" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px;">
-        
-        <div *ngIf="isFootball" formGroupName="krampon" style="display: flex; align-items: center; gap: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label style="display: flex; align-items: center; gap: 8px; width: 150px; font-weight: 600; color: #334155;"><input type="checkbox" formControlName="isActive"> 👟 Krampon Kiralama</label>
-          <input type="number" formControlName="availableCount" placeholder="Stok Sayısı" style="width: 100px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-          <input type="number" formControlName="unitPrice" placeholder="Adet Fiyatı (₺)" style="width: 120px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-        </div>
-
-        <div formGroupName="ayakkabi" style="display: flex; align-items: center; gap: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label style="display: flex; align-items: center; gap: 8px; width: 150px; font-weight: 600; color: #334155;"><input type="checkbox" formControlName="isActive"> 🥾 Spor Ayakkabı</label>
-          <input type="number" formControlName="availableCount" placeholder="Stok Sayısı" style="width: 100px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-          <input type="number" formControlName="unitPrice" placeholder="Adet Fiyatı (₺)" style="width: 120px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-        </div>
-
-        <div *ngIf="isFootball" formGroupName="yelek" style="display: flex; align-items: center; gap: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label style="display: flex; align-items: center; gap: 8px; width: 150px; font-weight: 600; color: #334155;"><input type="checkbox" formControlName="isActive"> 🦺 Yelek</label>
-          <input type="number" formControlName="availableCount" placeholder="Stok Sayısı" style="width: 100px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-          <input type="number" formControlName="unitPrice" placeholder="Takım Fiyatı (₺)" style="width: 120px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-        </div>
-
-        <div *ngIf="isFootball" formGroupName="hakem" style="display: flex; align-items: center; gap: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label style="display: flex; align-items: center; gap: 8px; width: 150px; font-weight: 600; color: #334155;"><input type="checkbox" formControlName="isActive"> ⚖️ Hakem</label>
-          <span style="width: 100px; color: #94a3b8; font-size: 14px;">(Mevcut: 1)</span>
-          <input type="number" formControlName="unitPrice" placeholder="Ücreti (₺)" style="width: 120px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-        </div>
-
-      </div>
-
-      <!-- Mesajlar ve Buton -->
-      <div *ngIf="hata" style="background: #fef2f2; color: #ef4444; padding: 15px; border-radius: 8px; border: 1px solid #f87171; margin-bottom: 20px; font-weight: 500;">
-        ❌ {{hata}}
-      </div>
-      <div *ngIf="mesaj" style="background: #f0fdf4; color: #22c55e; padding: 15px; border-radius: 8px; border: 1px solid #4ade80; margin-bottom: 20px; font-weight: 500;">
-        ✅ {{mesaj}}
-      </div>
-
-      <div style="display: flex; justify-content: flex-end;">
-        <button type="submit" [disabled]="sahaForm.invalid" style="background: #10b981; color: white; border: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;" [style.opacity]="sahaForm.invalid ? '0.5' : '1'">
-          Sisteme Kaydet
-        </button>
-      </div>
-      
-    </form>
   </div>
 </div>

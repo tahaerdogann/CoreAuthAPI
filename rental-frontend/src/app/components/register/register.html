@@ -1,88 +1,129 @@
-<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-  <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;">
+<div style="min-height: calc(100vh - 70px); display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-family: 'Inter', sans-serif; padding: 20px;">
+  
+  <div style="background: white; width: 100%; max-width: 450px; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+    
+    <!-- Dekoratif Elementler -->
+    <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 50%; opacity: 0.1;"></div>
+    <div style="position: absolute; bottom: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 50%; opacity: 0.1;"></div>
 
-    <h2 style="margin-bottom: 5px; color: #333;">Hesap Oluştur</h2>
-    <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 25px;">Adım {{ currentStep }} / 3</p>
-
-    <!-- FORM BAŞLANGICI -->
-    <form [formGroup]="registerForm">
-
-      <!-- ================= ADIM 1: AD & SOYAD ================= -->
-      <div *ngIf="currentStep === 1">
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Adınız:</label>
-          <input type="text" formControlName="name" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+    <div style="position: relative; z-index: 1;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Yeni Hesap Oluştur</h2>
+        
+        <!-- Adım Göstergesi -->
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 15px;">
+          <div [style.background]="currentStep >= 1 ? '#3b82f6' : '#e2e8f0'" style="height: 6px; width: 30px; border-radius: 4px; transition: background 0.3s;"></div>
+          <div [style.background]="currentStep >= 2 ? '#3b82f6' : '#e2e8f0'" style="height: 6px; width: 30px; border-radius: 4px; transition: background 0.3s;"></div>
+          <div [style.background]="currentStep >= 3 ? '#3b82f6' : '#e2e8f0'" style="height: 6px; width: 30px; border-radius: 4px; transition: background 0.3s;"></div>
         </div>
-
-        <div style="text-align: left; margin-bottom: 25px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Soyadınız:</label>
-          <input type="text" formControlName="surname" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-        </div>
-
-        <button type="button" (click)="nextStep()" style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-          İleri
-        </button>
       </div>
 
-      <!-- ================= ADIM 2: E-POSTA VEYA TELEFON ================= -->
-      <div *ngIf="currentStep === 2">
+      <!-- Hata & Başarı Mesajları -->
+      <div *ngIf="mesaj" style="background: #f0fdf4; color: #15803d; padding: 12px; border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #bbf7d0;">
+        ✅ {{ mesaj }}
+      </div>
+      <div *ngIf="hata" style="background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #fecaca;">
+        ❌ {{ hata }}
+      </div>
 
-        <!-- E-Posta Modu -->
-        <ng-container *ngIf="contactMethod === 'email'">
-          <div style="text-align: left; margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">E-posta Adresi:</label>
-            <input type="email" formControlName="email" placeholder="ornek@mail.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      <!-- FORM BAŞLANGICI -->
+      <form [formGroup]="registerForm">
+
+        <!-- ================= ADIM 1: AD & SOYAD ================= -->
+        <div *ngIf="currentStep === 1" style="display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-out;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Adınız</label>
+            <input type="text" formControlName="name" placeholder="Adınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
           </div>
-          <p style="font-size: 13px; text-align: left; margin-bottom: 20px;">
-            <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #007bff; text-decoration: none;">Veya telefon numarası ile kayıt ol</a>
-          </p>
-        </ng-container>
 
-        <!-- Telefon Modu -->
-        <ng-container *ngIf="contactMethod === 'phone'">
-          <div style="text-align: left; margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Telefon Numarası:</label>
-            <input type="text" formControlName="phoneNumber" placeholder="0555..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Soyadınız</label>
+            <input type="text" formControlName="surname" placeholder="Soyadınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
           </div>
-          <p style="font-size: 13px; text-align: left; margin-bottom: 20px;">
-            <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #007bff; text-decoration: none;">Veya e-posta ile kayıt ol</a>
-          </p>
-        </ng-container>
 
-        <div style="display: flex; gap: 10px;">
-          <button type="button" (click)="previousStep()" style="width: 30%; padding: 12px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Geri</button>
-          <button type="button" (click)="nextStep()" style="width: 70%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">İleri</button>
+          <button type="button" (click)="nextStep()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; margin-top: 5px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            İleri →
+          </button>
         </div>
+
+        <!-- ================= ADIM 2: E-POSTA VEYA TELEFON ================= -->
+        <div *ngIf="currentStep === 2" style="display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-out;">
+
+          <!-- E-Posta Modu -->
+          <ng-container *ngIf="contactMethod === 'email'">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">E-posta Adresi</label>
+              <input type="email" formControlName="email" placeholder="ornek@mail.com" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+              
+              <div style="margin-top: 10px; text-align: right;">
+                <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #64748b; font-size: 13px; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e1;">Telefon numarası kullan</a>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Telefon Modu -->
+          <ng-container *ngIf="contactMethod === 'phone'">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Telefon Numarası</label>
+              <input type="text" formControlName="phoneNumber" placeholder="0555..." style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+              
+              <div style="margin-top: 10px; text-align: right;">
+                <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #64748b; font-size: 13px; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e1;">E-posta kullan</a>
+              </div>
+            </div>
+          </ng-container>
+
+          <div style="display: flex; gap: 12px; margin-top: 5px;">
+            <button type="button" (click)="previousStep()" style="width: 35%; padding: 14px; background: transparent; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+              ← Geri
+            </button>
+            <button type="button" (click)="nextStep()" style="width: 65%; padding: 14px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              İleri →
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= ADIM 3: ŞİFRE ================= -->
+        <div *ngIf="currentStep === 3" style="display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-out;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Şifre Oluşturun</label>
+            <input type="password" formControlName="password" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Şifreyi Tekrar Girin</label>
+            <input type="password" formControlName="confirmPassword" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+            <div *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch')" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px;">
+              ⚠️ Şifreler eşleşmiyor!
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 5px;">
+            <button type="button" (click)="previousStep()" style="width: 35%; padding: 14px; background: transparent; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+              ← Geri
+            </button>
+            <button type="button" (click)="kayitOl()" style="width: 65%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              Kayıt Ol
+            </button>
+          </div>
+        </div>
+
+      </form>
+
+      <div style="text-align: center; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+        <p style="margin: 0; color: #64748b; font-size: 14px;">
+          Zaten hesabın var mı? 
+          <a routerLink="/login" style="color: #3b82f6; text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='#3b82f6'"href="/login">Giriş Yap</a>
+        </p>
       </div>
 
-      <!-- ================= ADIM 3: ŞİFRE OLUŞTURMA ================= -->
-      <div *ngIf="currentStep === 3">
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Şifre:</label>
-          <input type="password" formControlName="password" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-        </div>
-
-        <div style="text-align: left; margin-bottom: 25px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Şifreyi Doğrula:</label>
-          <input type="password" formControlName="confirmPassword" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-          <small *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch')" style="color: #e74c3c;">Şifreler eşleşmiyor!</small>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-          <button type="button" (click)="previousStep()" style="width: 30%; padding: 12px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Geri</button>
-          <button type="button" (click)="kayitOl()" style="width: 70%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Kayıt İşlemini Tamamla</button>
-        </div>
-      </div>
-
-    </form>
-
-    <!-- Uyarı Mesajları -->
-    <p *ngIf="mesaj" style="color: #27ae60; margin-top: 15px; font-weight: bold;">{{ mesaj }}</p>
-    <p *ngIf="hata" style="color: #c0392b; margin-top: 15px; font-weight: bold;">{{ hata }}</p>
-
-    <div style="margin-top: 25px;">
-      <a href="/login" style="color: #7f8c8d; text-decoration: none; font-size: 14px;">Zaten hesabın var mı? Giriş yap</a>
     </div>
-
   </div>
 </div>
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+</style>
