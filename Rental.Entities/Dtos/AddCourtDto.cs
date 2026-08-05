@@ -11,8 +11,17 @@ namespace Rental.Entities.Dtos
         public string District { get; set; } = string.Empty;
         public string Neighborhood { get; set; } = string.Empty;
         public string AddressDetail { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public decimal HourlyPrice { get; set; }
         public FacilityAmenities Amenities { get; set; }
         public string RentalOptionsJson { get; set; } = string.Empty;
+        public List<CourtPhotoDto> Photos { get; set; } = new();
+    }
+
+    public class CourtPhotoDto
+    {
+        public string Url { get; set; } = string.Empty;
+        public string PublicId { get; set; } = string.Empty;
+        public bool IsCover { get; set; }
     }
 }

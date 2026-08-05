@@ -11,11 +11,23 @@ import { AuthService } from './services/auth';
   styleUrls: ['./app.css'] // Varsa css dosyan
 })
 export class App { // DİKKAT: Burası AppComponent değil, App olmalı!
+  userInfo: any = null;
+  isProfileDropdownOpen: boolean = false;
 
-  constructor(public authService: AuthService, private router: Router) { }
+  constructor(public authService: AuthService, private router: Router) { 
+    if (this.authService.isLoggedIn()) {
+      this.userInfo = this.authService.getUserInfo();
+    }
+  }
+
+  toggleProfileDropdown() {
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
+  }
 
   cikisYap() {
     localStorage.removeItem('token');
+    this.userInfo = null;
+    this.isProfileDropdownOpen = false;
     this.router.navigate(['/login']);
   }
 }

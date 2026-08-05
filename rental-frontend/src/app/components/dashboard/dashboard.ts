@@ -42,17 +42,37 @@ export class Dashboard implements OnInit {
 
     this.http.get(url).subscribe({
       next: (data: any) => {
-        this.sahaListesi = data;
+        if (data && data.$values) this.sahaListesi = data.$values;
+        else if (Array.isArray(data)) this.sahaListesi = data;
+        else this.sahaListesi = [];
       },
       error: (err: any) => console.error("Sahalar yüklenirken hata:", err)
     });
+  }
+
+  getCoverPhoto(court: any): string | null {
+    if (!court || !court.photos) return null;
+    
+    let photos = [];
+    if (court.photos.$values) {
+      photos = court.photos.$values;
+    } else if (Array.isArray(court.photos)) {
+      photos = court.photos;
+    }
+
+    if (photos.length === 0) return null;
+
+    const cover = photos.find((p: any) => p.isCover);
+    if (cover) return cover.url;
+
+    return photos[0].url;
   }
 
   onSearch() {
     this.sahalarıYukle();
   }
 
-  goToCourtDetail(id: number) {
+  goToCourtDetail(id: string) {
     this.router.navigate(['/court-detail', id]);
   }
 }

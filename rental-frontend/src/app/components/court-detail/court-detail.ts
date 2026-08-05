@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth';
+import { FavoriteService } from '../../services/favorite';
 
 @Component({
   selector: 'app-court-detail',
@@ -13,17 +14,22 @@ import { AuthService } from '../../services/auth';
   styleUrls: ['./court-detail.css']
 })
 export class CourtDetailComponent implements OnInit {
-  courtId: number = 0;
+  courtId: string = '';
   court: any = null;
   slots: any[] = [];
   isLoading: boolean = true;
   bookingError: string = '';
   bookingSuccess: string = '';
+  
+  isFavorite: boolean = false;
+  confirmModalVisible: boolean = false;
+  slotToBook: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
     private authService: AuthService,
+    private favoriteService: FavoriteService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -32,9 +38,10 @@ export class CourtDetailComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       if (idParam) {
-        this.courtId = +idParam;
+        this.courtId = idParam;
         this.loadCourtDetails();
         this.loadCourtSlots();
+        this.checkFavoriteStatus();
       } else {
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -94,25 +101,78 @@ export class CourtDetailComponent implements OnInit {
     });
   }
 
-  bookSlot(slotId: number) {
-    this.bookingError = '';
-    this.bookingSuccess = '';
+  checkFavoriteStatus() {
+    if (this.authService.isLoggedIn()) {
+      console.log('checkFavoriteStatus: API isteği atılıyor...');
+      this.favoriteService.checkFavorite(this.courtId).subscribe({
+        next: (res) => {
+          console.log('checkFavoriteStatus: API Yanıtı:', res);
+          this.isFavorite = res.isFavorite;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('checkFavoriteStatus: API Hatası:', err);
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      console.log('checkFavoriteStatus: Kullanıcı giriş yapmamış, kontrol atlandı.');
+    }
+  }
 
+  toggleFavorite() {
+    console.log('toggleFavorite tetiklendi! CourtId:', this.courtId);
     if (!this.authService.isLoggedIn()) {
-      // Login değilse login sayfasına yönlendir ve dönüş URL'sini ver
+      console.log('Kullanıcı giriş yapmamış, logine yönlendiriliyor.');
       this.router.navigate(['/login'], { queryParams: { returnUrl: `/court-detail/${this.courtId}` } });
       return;
     }
+    
+    console.log('API isteği atılıyor...');
+    this.favoriteService.toggleFavorite(this.courtId).subscribe({
+      next: (res) => {
+        console.log('API Başarılı Yanıt Döndü:', res);
+        this.isFavorite = res.isFavorite;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('API Hata Döndü:', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
-    const payload = { slotId: slotId };
+  openConfirmModal(slot: any) {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: `/court-detail/${this.courtId}` } });
+      return;
+    }
+    this.slotToBook = slot;
+    this.confirmModalVisible = true;
+  }
+
+  closeConfirmModal() {
+    this.confirmModalVisible = false;
+    this.slotToBook = null;
+  }
+
+  bookSlot() {
+    if (!this.slotToBook) return;
+    
+    this.bookingError = '';
+    this.bookingSuccess = '';
+
+    const payload = { slotId: this.slotToBook.id };
     
     this.http.post(`${environment.apiUrl}/Bookings/create`, payload).subscribe({
       next: (res: any) => {
         this.bookingSuccess = res.message || 'Kiralama başarılı!';
+        this.closeConfirmModal();
         this.loadCourtSlots(); // Takvimi yenile
       },
       error: (err) => {
         this.bookingError = err.error?.message || err.error || 'Kiralama sırasında bir hata oluştu.';
+        this.closeConfirmModal();
       }
     });
   }

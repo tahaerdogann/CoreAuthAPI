@@ -6,7 +6,7 @@ namespace Rental.Entities.Dtos
     public class AddScheduleDto
     {
         [Required]
-        public int CourtId { get; set; }
+        public Guid CourtId { get; set; }
 
         [Required]
         public DateTime StartDate { get; set; }

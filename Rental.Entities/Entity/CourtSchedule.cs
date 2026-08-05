@@ -7,10 +7,10 @@ namespace Rental.Entities.Entity
     public class CourtSchedule
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [ForeignKey("Court")]
-        public int CourtId { get; set; }
+        public Guid CourtId { get; set; }
         // public virtual Court Court { get; set; } // Court sınıfınla bağlantı kurması için (Navigation Property)
 
         // 📅 1. KURAL: Planın Geçerlilik Takvimi
@@ -34,7 +34,7 @@ namespace Rental.Entities.Entity
 
         // 🔒 Sistem Kayıt Bilgileri
         public DateTime RecordDate { get; set; } = DateTime.Now;
-        public int RecordUserCode { get; set; }
+        public Guid RecordUserCode { get; set; }
 
         // 🌟 5. KURAL: Gelişmiş Esnek Kurallar (Haftanın günleri, istisnalar vb.)
         public string AdvancedRulesJson { get; set; } = string.Empty;

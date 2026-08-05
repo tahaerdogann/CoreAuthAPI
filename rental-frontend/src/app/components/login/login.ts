@@ -31,7 +31,7 @@ export class Login implements OnInit {
   girisYap() {
     this.hataMesaji = '';
     const loginData = {
-      email: this.email,
+      identifier: this.email,
       password: this.password
     };
 

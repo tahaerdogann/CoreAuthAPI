@@ -12,8 +12,8 @@ using Rental.DataAccess.Context;
 namespace Rental.DataAccess.Migrations
 {
     [DbContext(typeof(RentalDbContext))]
-    [Migration("20260727115357_UpdateCourtSlotsRenterId")]
-    partial class UpdateCourtSlotsRenterId
+    [Migration("20260730075429_InitialGuidMigration")]
+    partial class InitialGuidMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,17 +27,15 @@ namespace Rental.DataAccess.Migrations
 
             modelBuilder.Entity("Rental.Entities.Entity.Booking", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("CourtSlotId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("CourtSlotId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("bit");
@@ -45,8 +43,8 @@ namespace Rental.DataAccess.Migrations
                     b.Property<DateTime>("RecordDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("RecordUserCode")
-                        .HasColumnType("int");
+                    b.Property<Guid>("RecordUserCode")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -59,11 +57,9 @@ namespace Rental.DataAccess.Migrations
 
             modelBuilder.Entity("Rental.Entities.Entity.Court", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AddressDetail")
                         .IsRequired()
@@ -94,8 +90,8 @@ namespace Rental.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("RentalOptionsJson")
                         .IsRequired()
@@ -114,16 +110,71 @@ namespace Rental.DataAccess.Migrations
                     b.ToTable("Courts");
                 });
 
+            modelBuilder.Entity("Rental.Entities.Entity.CourtSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdvancedRulesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("BasePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("BufferDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("CloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<Guid>("CourtId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAutoScheduleEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan>("OpenTime")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan>("PrimeTimeEnd")
+                        .HasColumnType("time");
+
+                    b.Property<decimal>("PrimeTimePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<TimeSpan>("PrimeTimeStart")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime>("RecordDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RecordUserCode")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SessionDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CourtSchedules");
+                });
+
             modelBuilder.Entity("Rental.Entities.Entity.CourtSlot", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourtId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("CourtId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
@@ -134,8 +185,8 @@ namespace Rental.DataAccess.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("RenterId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("RenterId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
@@ -147,11 +198,9 @@ namespace Rental.DataAccess.Migrations
 
             modelBuilder.Entity("Rental.Entities.Entity.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -172,8 +221,8 @@ namespace Rental.DataAccess.Migrations
                     b.Property<DateTime>("RecordDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("RecordUserCode")
-                        .HasColumnType("int");
+                    b.Property<Guid>("RecordUserCode")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

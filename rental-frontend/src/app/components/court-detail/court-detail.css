@@ -1,0 +1,8 @@
+.heart-icon-active {
+  fill: #ef4444 !important;
+  stroke: #ef4444 !important;
+}
+.heart-icon-inactive {
+  fill: none !important;
+  stroke: #94a3b8 !important;
+}

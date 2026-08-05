@@ -43,7 +43,11 @@ builder.Services.AddCors(options =>
         policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 // Ve app.UseCors("AllowAll"); satırı ekli olmalı.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddHostedService<CoreAuthAPI.Services.AutoScheduleWorker>();
 builder.Services.AddOpenApi();
 

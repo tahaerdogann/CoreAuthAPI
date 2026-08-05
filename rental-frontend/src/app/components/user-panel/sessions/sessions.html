@@ -1,0 +1,76 @@
+<div>
+  <h1 style="font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 24px;">Seanslarım</h1>
+
+  <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+    <button (click)="setTab('upcoming')" [ngStyle]="{'color': activeTab === 'upcoming' ? '#3b82f6' : '#64748b', 'border-bottom': activeTab === 'upcoming' ? '2px solid #3b82f6' : 'none', 'font-weight': activeTab === 'upcoming' ? '600' : '500'}" style="background: none; border: none; padding: 8px 4px; font-size: 15px; cursor: pointer;">
+      Yaklaşan Seanslar
+    </button>
+    <button (click)="setTab('past')" [ngStyle]="{'color': activeTab === 'past' ? '#3b82f6' : '#64748b', 'border-bottom': activeTab === 'past' ? '2px solid #3b82f6' : 'none', 'font-weight': activeTab === 'past' ? '600' : '500'}" style="background: none; border: none; padding: 8px 4px; font-size: 15px; cursor: pointer;">
+      Geçmiş Seanslar
+    </button>
+  </div>
+
+  <div *ngIf="activeTab === 'upcoming'">
+    <div *ngIf="upcomingBookings.length === 0" style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
+      Henüz yaklaşan bir seansınız bulunmuyor.
+    </div>
+    
+    <div *ngFor="let item of upcomingBookings" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #0f172a; font-weight: 600;">{{ item.courtName }}</h3>
+        <div style="display: flex; gap: 16px; color: #64748b; font-size: 14px;">
+          <span style="display: flex; align-items: center; gap: 4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            {{ item.startTime | date:'dd.MM.yyyy' }}
+          </span>
+          <span style="display: flex; align-items: center; gap: 4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            {{ item.startTime | date:'HH:mm' }} - {{ item.endTime | date:'HH:mm' }}
+          </span>
+          <span style="display: flex; align-items: center; gap: 4px; font-weight: 600; color: #10b981;">
+            {{ item.price }} ₺
+          </span>
+        </div>
+      </div>
+      <div>
+        <button (click)="openCancelModal(item)" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#fca5a5'; this.style.color='white'" onmouseout="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444'">İptal Et</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'past'">
+    <div *ngIf="pastBookings.length === 0" style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
+      Geçmiş seansınız bulunmuyor.
+    </div>
+
+    <div *ngFor="let item of pastBookings" style="background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; opacity: 0.85;">
+      <div>
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #334155; font-weight: 600; text-decoration: {{ item.isCancelled ? 'line-through' : 'none' }};">{{ item.courtName }}</h3>
+        <div style="display: flex; gap: 16px; color: #94a3b8; font-size: 13px;">
+          <span>{{ item.startTime | date:'dd.MM.yyyy HH:mm' }}</span>
+          <span>{{ item.price }} ₺</span>
+          <span *ngIf="item.isCancelled" style="color: #ef4444; font-weight: 600;">İptal Edildi</span>
+        </div>
+      </div>
+      <div>
+        <button (click)="rebook(item.courtId)" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#3b82f6'; this.style.color='white'" onmouseout="this.style.backgroundColor='#eff6ff'; this.style.color='#3b82f6'">Tekrar Kirala</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div *ngIf="cancelModalVisible" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+  <div style="background: white; width: 400px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center;">
+    <div style="width: 48px; height: 48px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </div>
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Seansı İptal Et</h2>
+    <p style="font-size: 14px; color: #64748b; margin: 0 0 24px 0;">Bu seansı iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+    
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button (click)="closeCancelModal()" style="flex: 1; padding: 10px; background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='white'">Vazgeç</button>
+      <button (click)="confirmCancel()" style="flex: 1; padding: 10px; background: #ef4444; border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">Evet, İptal Et</button>
+    </div>
+  </div>
+</div>

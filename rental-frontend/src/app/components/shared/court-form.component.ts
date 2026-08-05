@@ -67,6 +67,10 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
             <label>Açık Adres</label>
             <textarea formControlName="addressDetail" rows="2" placeholder="Gönülden sok. 18/20"></textarea>
           </div>
+          <div class="form-group full-width">
+            <label>Saha Açıklaması</label>
+            <textarea formControlName="description" rows="3" placeholder="Saha hakkında ek bilgiler, kurallar, ulaşım detayları..."></textarea>
+          </div>
         </div>
       </div>
 
@@ -113,6 +117,35 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
         </div>
       </div>
 
+      <!-- FOTOĞRAFLAR -->
+      <div class="section-card">
+        <h3 class="section-title">Saha Fotoğrafları</h3>
+        <p class="section-subtitle">En fazla 16 adet fotoğraf ekleyebilirsiniz. İlk fotoğraf kapak olarak kullanılacaktır.</p>
+        
+        <div class="file-upload-container">
+          <input type="file" id="photos" multiple accept="image/*" (change)="onFileSelected($event)" class="file-input" [disabled]="selectedFiles.length + existingPhotos.length >= 16">
+          <label for="photos" class="file-label" [class.disabled]="selectedFiles.length + existingPhotos.length >= 16">
+            <span class="upload-icon">📸</span>
+            <span>Fotoğraf Seç veya Sürükle</span>
+          </label>
+        </div>
+
+        <div class="photo-preview-grid" *ngIf="selectedFiles.length > 0 || existingPhotos.length > 0">
+          <!-- Mevcut Fotoğraflar (Edit Modu) -->
+          <div class="photo-thumbnail" *ngFor="let photo of existingPhotos; let i = index">
+            <img [src]="photo.url" alt="Saha Fotoğrafı">
+            <div class="cover-badge" *ngIf="i === 0">Kapak</div>
+            <button type="button" class="btn-remove" (click)="removeExistingPhoto(photo)">×</button>
+          </div>
+          <!-- Yeni Seçilen Fotoğraflar -->
+          <div class="photo-thumbnail new-photo" *ngFor="let file of selectedFiles; let i = index">
+            <img [src]="getFileUrl(file)" alt="Yeni Fotoğraf">
+            <div class="cover-badge" *ngIf="existingPhotos.length === 0 && i === 0">Kapak</div>
+            <button type="button" class="btn-remove" (click)="removeSelectedFile(i)">×</button>
+          </div>
+        </div>
+      </div>
+
       <!-- BUTONLAR -->
       <div class="button-group">
         <button type="button" class="btn-cancel" *ngIf="showCancel" (click)="onCancel()">İptal Et</button>
@@ -153,6 +186,22 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
     .btn-submit[disabled] { opacity: 0.6; cursor: not-allowed; }
     .btn-cancel { background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s; }
     .btn-cancel:hover { background: #f1f5f9; color: #334155; }
+
+    /* FOTOĞRAF YÜKLEME ALANI */
+    .file-upload-container { margin-bottom: 20px; position: relative; }
+    .file-input { width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1; }
+    .file-label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; border: 2px dashed #94a3b8; border-radius: 12px; background: #f8fafc; cursor: pointer; transition: all 0.2s; color: #475569; font-weight: 600; }
+    .file-label:hover:not(.disabled) { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .file-label.disabled { opacity: 0.5; cursor: not-allowed; }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    
+    .photo-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }
+    .photo-thumbnail { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .photo-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-thumbnail.new-photo img { filter: sepia(0.2); } /* Yeni fotoları hafif belli etmek için */
+    .btn-remove { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+    .btn-remove:hover { background: #b91c1c; }
+    .cover-badge { position: absolute; bottom: 5px; left: 5px; background: #10b981; color: white; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
   `]
 })
 export class CourtFormComponent implements OnInit {
@@ -182,6 +231,11 @@ export class CourtFormComponent implements OnInit {
   aktifMahalleler: string[] = [];
   availableSurfaceTypes: string[] = [];
   activeRentalOptionsKeys: string[] = [];
+  
+  selectedFiles: File[] = [];
+  existingPhotos: any[] = [];
+  deletedPhotoIds: string[] = []; // ID of photos to delete on server
+  fileUrls: Map<File, string> = new Map();
 
   constructor(private fb: FormBuilder) {
     this.sahaForm = this.fb.group({
@@ -192,6 +246,7 @@ export class CourtFormComponent implements OnInit {
       district: ['', Validators.required],
       neighborhood: ['', Validators.required],
       addressDetail: [''],
+      description: [''],
       amenities: this.fb.group({
         restroom: [false], cafeteria: [false], disabledAccess: [false],
         changingRoom: [false], wifi: [false], shower: [false],
@@ -234,7 +289,8 @@ export class CourtFormComponent implements OnInit {
       city: data.city || '',
       district: data.district || '',
       neighborhood: data.neighborhood || '',
-      addressDetail: data.addressDetail || ''
+      addressDetail: data.addressDetail || '',
+      description: data.description || ''
     });
 
     this.onSportTypeChange(); // Load surface and rental options for sport
@@ -261,6 +317,13 @@ export class CourtFormComponent implements OnInit {
         const parsed = typeof data.rentalOptionsJson === 'string' ? JSON.parse(data.rentalOptionsJson) : data.rentalOptionsJson;
         this.sahaForm.get('rentalOptions')?.patchValue(parsed);
       } catch(e) {}
+    }
+
+    // Set photos
+    if (data.photos && Array.isArray(data.photos)) {
+      this.existingPhotos = [...data.photos];
+      // sort so cover is first
+      this.existingPhotos.sort((a, b) => (b.isCover ? 1 : 0) - (a.isCover ? 1 : 0));
     }
   }
 
@@ -310,6 +373,40 @@ export class CourtFormComponent implements OnInit {
     return map[key] || key;
   }
 
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    if (files) {
+      const remainingSlots = 16 - (this.selectedFiles.length + this.existingPhotos.length);
+      const limit = Math.min(files.length, remainingSlots);
+      
+      for (let i = 0; i < limit; i++) {
+        const file = files[i];
+        this.selectedFiles.push(file);
+        // Önizleme için URL oluştur
+        this.fileUrls.set(file, URL.createObjectURL(file));
+      }
+    }
+    // reset input
+    event.target.value = '';
+  }
+
+  getFileUrl(file: File): string {
+    return this.fileUrls.get(file) || '';
+  }
+
+  removeSelectedFile(index: number) {
+    const file = this.selectedFiles[index];
+    const url = this.fileUrls.get(file);
+    if (url) URL.revokeObjectURL(url);
+    this.fileUrls.delete(file);
+    this.selectedFiles.splice(index, 1);
+  }
+
+  removeExistingPhoto(photo: any) {
+    this.deletedPhotoIds.push(photo.id);
+    this.existingPhotos = this.existingPhotos.filter(p => p.id !== photo.id);
+  }
+
   onSubmit() {
     if (this.sahaForm.invalid) {
       this.sahaForm.markAllAsTouched();
@@ -343,9 +440,15 @@ export class CourtFormComponent implements OnInit {
       district: rawValue.district,
       neighborhood: rawValue.neighborhood,
       addressDetail: rawValue.addressDetail,
+      description: rawValue.description,
       hourlyPrice: 0,
       amenities: this.calculateBitwiseAmenities(rawValue.amenities),
-      rentalOptionsJson: JSON.stringify(activeRentals)
+      rentalOptionsJson: JSON.stringify(activeRentals),
+      
+      // Fotoğraf yükleme işlemleri için eklenen alanlar (Parent Component kullanacak)
+      selectedFiles: this.selectedFiles,
+      existingPhotos: this.existingPhotos,
+      deletedPhotoIds: this.deletedPhotoIds
     };
 
     this.formSubmit.emit(payload);

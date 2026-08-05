@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Rental.Entities.Entity;
 
 namespace Rental.DataAccess.Context
@@ -16,5 +16,7 @@ namespace Rental.DataAccess.Context
         public DbSet<CourtSlot> CourtSlots { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<CourtSchedule> CourtSchedules { get; set; }
+        public DbSet<UserFavoriteCourt> UserFavoriteCourts { get; set; }
+        public DbSet<CourtPhoto> CourtPhotos { get; set; }
     }
 }

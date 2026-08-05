@@ -5,13 +5,14 @@ namespace Rental.Entities.Entity
 {
     public class Court
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
 
         public string City { get; set; } = string.Empty;
         public string District { get; set; } = string.Empty;
         public string Neighborhood { get; set; } = string.Empty;
         public string AddressDetail { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         public string SportType { get; set; } = string.Empty;
         public string SurfaceType { get; set; } = string.Empty;
@@ -23,6 +24,8 @@ namespace Rental.Entities.Entity
         public decimal HourlyPrice { get; set; }
 
         public bool IsActive { get; set; } = true;
-        public int OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
+
+        public ICollection<CourtPhoto> Photos { get; set; } = new List<CourtPhoto>();
     }
 }

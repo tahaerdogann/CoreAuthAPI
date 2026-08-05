@@ -8,6 +8,23 @@
     <!-- Sol Taraf: Saha Detayları -->
     <div style="flex: 1; min-width: 300px;">
       <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;">
+        
+        <!-- FOTOĞRAF GALERİSİ -->
+        <div *ngIf="(court.photos?.$values?.length || court.photos?.length) > 0" style="margin-bottom: 25px;">
+          <!-- Kapak Fotoğrafı -->
+          <div style="width: 100%; height: 320px; border-radius: 12px; overflow: hidden; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <img [src]="court.photos?.$values ? court.photos.$values[0].url : court.photos[0].url" style="width: 100%; height: 100%; object-fit: cover;" alt="Kapak Fotoğrafı">
+          </div>
+          <!-- Diğer Fotoğraflar -->
+          <div *ngIf="(court.photos?.$values?.length || court.photos?.length) > 1" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin;">
+            <ng-container *ngFor="let photo of (court.photos?.$values || court.photos); let i = index">
+              <div *ngIf="i > 0" style="width: 100px; height: 75px; flex-shrink: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <img [src]="photo.url" style="width: 100%; height: 100%; object-fit: cover;" alt="Saha Fotoğrafı">
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
         <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
           <div style="width: 60px; height: 60px; background-color: #e8f8f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #1abc9c;">
             <span *ngIf="court.sportType === 'Futbol'">⚽</span>
@@ -17,13 +34,22 @@
             <span *ngIf="!['Futbol', 'Basketbol', 'Tenis', 'Voleybol'].includes(court.sportType)">🏟️</span>
           </div>
           <div>
-            <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">{{ court.name }}</h1>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+              <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">{{ court.name }}</h1>
+              <button (click)="toggleFavorite()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'" title="Favorilere Ekle/Çıkar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" [ngClass]="isFavorite ? 'heart-icon-active' : 'heart-icon-inactive'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              </button>
+            </div>
             <span style="color: #7f8c8d; font-size: 15px;">{{ court.sportType }} - Zemin: {{ court.surfaceType }}</span>
           </div>
         </div>
 
         <div style="color: #34495e; font-size: 15px; margin-bottom: 20px; line-height: 1.5;">
           <strong>📍 Adres:</strong> {{ court.addressDetail }}, {{ court.neighborhood }}, {{ court.district }} / {{ court.city }}
+        </div>
+
+        <div *ngIf="court.description" style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; margin-bottom: 25px; border-radius: 0 8px 8px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+          {{ court.description }}
         </div>
 
         <div style="margin-bottom: 25px;">
@@ -41,7 +67,10 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <ng-container *ngFor="let option of court.parsedRentalOptions | keyvalue">
               <div *ngIf="option.value !== null && option.value !== '' && (option.value.isActive !== false) && (option.value.unitPrice !== null || option.value > 0)" style="display: flex; justify-content: space-between; align-items: center; background: #fffbeb; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <span style="font-weight: 600; color: #b45309; text-transform: capitalize;">{{ option.key }}</span>
+                <div>
+                  <span style="font-weight: 600; color: #b45309; text-transform: capitalize;">{{ option.value.name ? option.value.name : option.key }}</span>
+                  <span *ngIf="option.value.availableCount" style="margin-left: 8px; font-size: 13px; color: #d97706; background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Stok: {{ option.value.availableCount }}</span>
+                </div>
                 <span style="font-weight: bold; color: #d97706;">{{ option.value.unitPrice !== undefined ? option.value.unitPrice : option.value }} ₺</span>
               </div>
             </ng-container>
@@ -84,7 +113,7 @@
                 {{ slot.price }} ₺
               </div>
               
-              <button *ngIf="!slot.isBooked" (click)="bookSlot(slot.id)" style="background-color: #2ecc71; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;">
+              <button *ngIf="!slot.isBooked" (click)="openConfirmModal(slot)" style="background-color: #2ecc71; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;">
                 KİRALA
               </button>
               <button *ngIf="slot.isBooked" disabled style="background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
@@ -97,5 +126,30 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Kiralama Onay Pop-up Modalı -->
+<div *ngIf="confirmModalVisible" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+  <div style="background: white; width: 400px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center;">
+    <div style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    </div>
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Kiralamayı Onayla</h2>
+    <p style="font-size: 14px; color: #64748b; margin: 0 0 16px 0;">Aşağıdaki seansı kiralayacaksınız, emin misiniz?</p>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 24px; text-align: left;">
+      <div style="font-weight: 600; color: #334155; margin-bottom: 4px;">{{ court?.name }}</div>
+      <div style="color: #64748b; font-size: 13px; display: flex; justify-content: space-between;">
+        <span>{{ slotToBook?.startTime | date:'dd.MM.yyyy' }}</span>
+        <span>{{ slotToBook?.startTime | date:'HH:mm' }} - {{ slotToBook?.endTime | date:'HH:mm' }}</span>
+      </div>
+      <div style="color: #10b981; font-weight: 600; margin-top: 8px; text-align: right;">{{ slotToBook?.price }} ₺</div>
+    </div>
+    
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button (click)="closeConfirmModal()" style="flex: 1; padding: 10px; background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='white'">Vazgeç</button>
+      <button (click)="bookSlot()" style="flex: 1; padding: 10px; background: #10b981; border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#059669'" onmouseout="this.style.backgroundColor='#10b981'">Evet, Kirala</button>
+    </div>
   </div>
 </div>

@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { CourtFormComponent } from '../shared/court-form.component';
@@ -15,7 +16,7 @@ import { CourtFormComponent } from '../shared/court-form.component';
 })
 export class OwnerDashboardComponent implements OnInit {
   myCourts: any[] = [];
-  selectedCourtId: number | null = null;
+  selectedCourtId: string | null = null;
   selectedCourtData: any = null;
   courtSlots: any[] = [];
   scheduleForm: FormGroup;
@@ -112,7 +113,7 @@ export class OwnerDashboardComponent implements OnInit {
 
   onCourtSelected(event: any) {
     const value = event.target.value;
-    this.selectedCourtId = value ? Number(value) : null;
+    this.selectedCourtId = value ? String(value) : null;
     this.selectedCourtData = this.myCourts.find(c => (c.id || c.Id) === this.selectedCourtId);
 
     if (this.selectedCourtId) {
@@ -126,7 +127,7 @@ export class OwnerDashboardComponent implements OnInit {
     }
   }
 
-  loadCourtSlots(courtId: number) {
+  loadCourtSlots(courtId: string) {
     this.http.get(`${environment.apiUrl}/Courts/slots/${courtId}`).subscribe({
       next: (res: any) => {
         if (res && res.$values) this.courtSlots = res.$values;
@@ -260,25 +261,85 @@ export class OwnerDashboardComponent implements OnInit {
     this.isEditModalOpen = false;
   }
 
-  onEditCourtSubmit(payload: any) {
+  async onEditCourtSubmit(payload: any) {
     if (!this.selectedCourtId) return;
     this.isUpdatingCourt = true;
     
     const token = localStorage.getItem('token');
     const headers = { 'Authorization': `Bearer ${token}` };
 
-    this.http.put(`${environment.apiUrl}/Courts/${this.selectedCourtId}`, payload, { headers }).subscribe({
-      next: (res: any) => {
-        this.isUpdatingCourt = false;
-        this.closeEditModal();
-        this.showAlert("Başarılı", res.message || "Saha başarıyla güncellendi!");
-        this.loadMyCourts(); // Yeniden yükle ki dropdown verileri vs güncellensin
-      },
-      error: (err) => {
-        this.isUpdatingCourt = false;
-        this.showAlert("Hata", err.error?.message || "Saha güncellenirken hata oluştu.");
+    try {
+      // 1. Silinecek Fotoğrafları Backend'den Sil
+      if (payload.deletedPhotoIds && payload.deletedPhotoIds.length > 0) {
+        for (const photoId of payload.deletedPhotoIds) {
+          try {
+            await firstValueFrom(this.http.delete(`${environment.apiUrl}/Courts/${this.selectedCourtId}/photos/${photoId}`, { headers }));
+          } catch (delErr) {
+            console.error("Fotoğraf silinirken hata:", delErr);
+          }
+        }
       }
-    });
+
+      // 2. Yeni Fotoğrafları Cloudinary'ye Yükle
+      const uploadedPhotos: any[] = [];
+      const selectedFiles: File[] = payload.selectedFiles || [];
+      const existingPhotos: any[] = payload.existingPhotos || [];
+
+      if (selectedFiles.length > 0) {
+        // İmzayı Backend'den al
+        const signatureRes: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
+
+        for (let file of selectedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', signatureRes.apiKey);
+          formData.append('timestamp', signatureRes.timestamp);
+          formData.append('signature', signatureRes.signature);
+          formData.append('folder', signatureRes.folder); // Backend folder bilgisini veriyor
+
+          const res: any = await firstValueFrom(this.http.post(uploadUrl, formData));
+          uploadedPhotos.push({
+            url: res.secure_url,
+            publicId: res.public_id,
+            isCover: false
+          });
+        }
+      }
+
+      // Tüm fotoğrafları birleştir (kalan mevcutlar + yeniler)
+      let allPhotos = [...existingPhotos, ...uploadedPhotos];
+      if (allPhotos.length > 0 && !allPhotos.some(p => p.isCover)) {
+        allPhotos[0].isCover = true;
+      }
+
+      // 3. API Payload'unu hazırla ve Kaydet
+      const apiPayload = {
+        name: payload.name,
+        sportType: payload.sportType,
+        surfaceType: payload.surfaceType,
+        city: payload.city,
+        district: payload.district,
+        neighborhood: payload.neighborhood,
+        addressDetail: payload.addressDetail,
+        description: payload.description,
+        hourlyPrice: payload.hourlyPrice,
+        amenities: payload.amenities,
+        rentalOptionsJson: payload.rentalOptionsJson,
+        photos: allPhotos
+      };
+
+      const res: any = await firstValueFrom(this.http.put(`${environment.apiUrl}/Courts/${this.selectedCourtId}`, apiPayload, { headers }));
+      
+      this.isUpdatingCourt = false;
+      this.closeEditModal();
+      this.showAlert("Başarılı", res.message || "Saha başarıyla güncellendi!");
+      this.loadMyCourts();
+      
+    } catch (err: any) {
+      this.isUpdatingCourt = false;
+      this.showAlert("Hata", err.error?.message || err.message || "Saha güncellenirken hata oluştu.");
+    }
   }
 
   toggleAutoSchedule() {

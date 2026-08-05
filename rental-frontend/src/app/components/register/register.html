@@ -20,10 +20,10 @@
 
       <!-- Hata & Başarı Mesajları -->
       <div *ngIf="mesaj" style="background: #f0fdf4; color: #15803d; padding: 12px; border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #bbf7d0;">
-        ✅ {{ mesaj }}
+        {{ mesaj }}
       </div>
       <div *ngIf="hata" style="background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; font-size: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #fecaca;">
-        ❌ {{ hata }}
+        {{ hata }}
       </div>
 
       <!-- FORM BAŞLANGICI -->
@@ -33,12 +33,12 @@
         <div *ngIf="currentStep === 1" style="display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-out;">
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Adınız</label>
-            <input type="text" formControlName="name" placeholder="Adınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+            <input type="text" formControlName="name" (keyup.enter)="nextStep()" placeholder="Adınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
           </div>
 
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Soyadınız</label>
-            <input type="text" formControlName="surname" placeholder="Soyadınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+            <input type="text" formControlName="surname" (keyup.enter)="nextStep()" placeholder="Soyadınız" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
           </div>
 
           <button type="button" (click)="nextStep()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; margin-top: 5px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -53,7 +53,7 @@
           <ng-container *ngIf="contactMethod === 'email'">
             <div>
               <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">E-posta Adresi</label>
-              <input type="email" formControlName="email" placeholder="ornek@mail.com" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+              <input type="email" formControlName="email" (keyup.enter)="nextStep()" placeholder="ornek@mail.com" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
               
               <div style="margin-top: 10px; text-align: right;">
                 <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #64748b; font-size: 13px; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e1;">Telefon numarası kullan</a>
@@ -65,7 +65,7 @@
           <ng-container *ngIf="contactMethod === 'phone'">
             <div>
               <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Telefon Numarası</label>
-              <input type="text" formControlName="phoneNumber" placeholder="0555..." style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+              <input type="text" formControlName="phoneNumber" (keyup.enter)="nextStep()" placeholder="0555..." style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
               
               <div style="margin-top: 10px; text-align: right;">
                 <a href="javascript:void(0)" (click)="toggleContactMethod()" style="color: #64748b; font-size: 13px; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e1;">E-posta kullan</a>
@@ -87,12 +87,12 @@
         <div *ngIf="currentStep === 3" style="display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-out;">
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Şifre Oluşturun</label>
-            <input type="password" formControlName="password" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+            <input type="password" formControlName="password" (keyup.enter)="kayitOl()" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
           </div>
 
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">Şifreyi Tekrar Girin</label>
-            <input type="password" formControlName="confirmPassword" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
+            <input type="password" formControlName="confirmPassword" (keyup.enter)="kayitOl()" placeholder="••••••••" style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;">
             <div *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch')" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px;">
               ⚠️ Şifreler eşleşmiyor!
             </div>

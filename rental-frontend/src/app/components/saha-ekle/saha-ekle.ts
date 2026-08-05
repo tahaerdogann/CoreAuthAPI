@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { CourtFormComponent } from '../shared/court-form.component';
@@ -19,25 +20,77 @@ export class SahaEkleComponent {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  onFormSubmit(payload: any) {
+  async onFormSubmit(payload: any) {
     this.hata = '';
-    this.mesaj = 'Saha kaydediliyor...';
+    this.mesaj = 'Fotoğraflar yükleniyor, lütfen bekleyin...';
     this.isSubmitting = true;
 
-    const token = localStorage.getItem('token');
-    const headers = { 'Authorization': `Bearer ${token}` };
+    try {
+      const uploadedPhotos: any[] = [];
+      const selectedFiles: File[] = payload.selectedFiles || [];
+      const existingPhotos: any[] = payload.existingPhotos || [];
 
-    this.http.post(`${environment.apiUrl}/Courts/add`, payload, { headers }).subscribe({
-      next: (res: any) => {
-        this.mesaj = res.message || 'Saha başarıyla eklendi!';
-        this.isSubmitting = false;
-        setTimeout(() => { this.router.navigate(['/owner-dashboard']); }, 1500);
-      },
-      error: (err) => { 
-        this.mesaj = ''; 
-        this.hata = err.error?.message || 'Saha eklenirken hata oluştu.';
-        this.isSubmitting = false;
+      // Cloudinary'ye Yükleme
+      if (selectedFiles.length > 0) {
+        // İmzayı Backend'den al
+        const signatureRes: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
+
+        for (let file of selectedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', signatureRes.apiKey);
+          formData.append('timestamp', signatureRes.timestamp);
+          formData.append('signature', signatureRes.signature);
+          formData.append('folder', signatureRes.folder); // Backend folder bilgisini veriyor
+
+          const res: any = await firstValueFrom(this.http.post(uploadUrl, formData));
+          uploadedPhotos.push({
+            url: res.secure_url,
+            publicId: res.public_id,
+            isCover: false // Kapak mantığı daha sonra düzenleniyor
+          });
+        }
       }
-    });
+
+      this.mesaj = 'Saha kaydediliyor...';
+
+      // Tüm fotoğrafları birleştir (mevcutlar + yeniler)
+      let allPhotos = [...existingPhotos, ...uploadedPhotos];
+      // Eğer hiç kapak yoksa ilk fotoğrafı kapak yap
+      if (allPhotos.length > 0 && !allPhotos.some(p => p.isCover)) {
+        allPhotos[0].isCover = true;
+      }
+
+      // API Payload'unu hazırla
+      const apiPayload = {
+        name: payload.name,
+        sportType: payload.sportType,
+        surfaceType: payload.surfaceType,
+        city: payload.city,
+        district: payload.district,
+        neighborhood: payload.neighborhood,
+        addressDetail: payload.addressDetail,
+        description: payload.description,
+        hourlyPrice: payload.hourlyPrice,
+        amenities: payload.amenities,
+        rentalOptionsJson: payload.rentalOptionsJson,
+        photos: allPhotos
+      };
+
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const res: any = await firstValueFrom(this.http.post(`${environment.apiUrl}/Courts/add`, apiPayload, { headers }));
+      
+      this.mesaj = res.message || 'Saha başarıyla eklendi!';
+      this.isSubmitting = false;
+      setTimeout(() => { this.router.navigate(['/owner-dashboard']); }, 1500);
+
+    } catch (err: any) {
+      this.mesaj = ''; 
+      this.hata = err.error?.message || err.message || 'İşlem sırasında hata oluştu.';
+      this.isSubmitting = false;
+    }
   }
 }

@@ -83,7 +83,7 @@ export class RegisterComponent implements OnInit {
         return;
       }
 
-      this.authService.checkEmail(emailControl.value).subscribe(res => {
+      this.authService.checkIdentifier(emailControl.value).subscribe(res => {
         if (res.exists) {
           this.hata = "Bu e-posta adresi sistemde zaten kayıtlı!";
           this.emailAlinmisMi = true;
@@ -100,7 +100,15 @@ export class RegisterComponent implements OnInit {
         this.hata = "Lütfen geçerli bir telefon numarası girin.";
         return;
       }
-      this.currentStep++;
+
+      this.authService.checkIdentifier(phoneControl.value).subscribe(res => {
+        if (res.exists) {
+          this.hata = "Bu telefon numarası sistemde zaten kayıtlı!";
+        } else {
+          this.currentStep++;
+        }
+        this.cdr.detectChanges();
+      });
     }
   }
 

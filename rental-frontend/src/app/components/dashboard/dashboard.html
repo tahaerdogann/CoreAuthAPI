@@ -45,12 +45,16 @@
       <!-- Court Card -->
       <div *ngFor="let court of sahaListesi" (click)="goToCourtDetail(court.id || court.Id)" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #eee;">
         
-        <div style="height: 160px; background-color: #ecf0f1; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #bdc3c7;">
-          <span *ngIf="court.sportType === 'Futbol'">⚽</span>
-          <span *ngIf="court.sportType === 'Basketbol'">🏀</span>
-          <span *ngIf="court.sportType === 'Tenis'">🎾</span>
-          <span *ngIf="court.sportType === 'Voleybol'">🏐</span>
-          <span *ngIf="!['Futbol', 'Basketbol', 'Tenis', 'Voleybol'].includes(court.sportType)">🏟️</span>
+        <div style="height: 160px; background-color: #ecf0f1; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #bdc3c7; position: relative; overflow: hidden;">
+          <img *ngIf="getCoverPhoto(court)" [src]="getCoverPhoto(court)" style="width: 100%; height: 100%; object-fit: cover;" alt="Saha Fotoğrafı">
+          
+          <ng-container *ngIf="!getCoverPhoto(court)">
+            <span *ngIf="court.sportType === 'Futbol'">⚽</span>
+            <span *ngIf="court.sportType === 'Basketbol'">🏀</span>
+            <span *ngIf="court.sportType === 'Tenis'">🎾</span>
+            <span *ngIf="court.sportType === 'Voleybol'">🏐</span>
+            <span *ngIf="!['Futbol', 'Basketbol', 'Tenis', 'Voleybol'].includes(court.sportType)">🏟️</span>
+          </ng-container>
         </div>
         
         <div style="padding: 20px;">
