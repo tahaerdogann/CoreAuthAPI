@@ -1,6 +1,4 @@
 using Rental.Entities.Enum;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Rental.Entities.Entity
 {
     public class Court
@@ -19,9 +17,6 @@ namespace Rental.Entities.Entity
 
         public FacilityAmenities Amenities { get; set; } = FacilityAmenities.None;
         public string RentalOptionsJson { get; set; } = string.Empty;
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal HourlyPrice { get; set; }
 
         public bool IsActive { get; set; } = true;
         public Guid OwnerId { get; set; }

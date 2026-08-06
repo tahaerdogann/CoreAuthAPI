@@ -47,7 +47,6 @@ namespace CoreAuthAPI.Controllers
                 Neighborhood = request.Neighborhood,
                 AddressDetail = request.AddressDetail,
                 Description = request.Description,
-                HourlyPrice = request.HourlyPrice,
                 Amenities = request.Amenities,
                 RentalOptionsJson = request.RentalOptionsJson ?? "{}",
                 OwnerId = userId,
@@ -398,7 +397,6 @@ namespace CoreAuthAPI.Controllers
             court.Neighborhood = request.Neighborhood;
             court.AddressDetail = request.AddressDetail;
             court.Description = request.Description;
-            court.HourlyPrice = request.HourlyPrice;
             court.Amenities = request.Amenities;
             court.RentalOptionsJson = request.RentalOptionsJson ?? "{}";
 
