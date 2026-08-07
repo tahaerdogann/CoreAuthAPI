@@ -115,7 +115,7 @@ namespace CoreAuthAPI.Controllers
                 c.Longitude,
                 c.OwnerId,
                 c.IsActive,
-                CoverPhotoUrl = c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover) != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover).Url : (c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault() != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault().Url : null)
+                Photos = c.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.Url).ToList()
             }).ToList();
 
             var finalResults = dbResults.Select(r => new {
@@ -135,7 +135,7 @@ namespace CoreAuthAPI.Controllers
                 r.Longitude,
                 r.OwnerId,
                 r.IsActive,
-                r.CoverPhotoUrl,
+                r.Photos,
                 DistanceKm = (lat.HasValue && lng.HasValue && r.Latitude.HasValue && r.Longitude.HasValue) 
                              ? CalculateDistance(lat.Value, lng.Value, r.Latitude.Value, r.Longitude.Value) 
                              : (double?)null

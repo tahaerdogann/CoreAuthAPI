@@ -104,17 +104,26 @@ export class Dashboard implements OnInit, AfterViewInit {
   }
 
   getPhotos(court: any): string[] {
-    if (!court || !court.photos) return [];
+    if (!court) return [];
     
+    let rawPhotos = court.photos || court.Photos;
     let photos = [];
-    if (court.photos.$values) {
-      photos = court.photos.$values;
-    } else if (Array.isArray(court.photos)) {
-      photos = court.photos;
+    if (rawPhotos) {
+      if (rawPhotos.$values) {
+        photos = rawPhotos.$values;
+      } else if (Array.isArray(rawPhotos)) {
+        photos = rawPhotos;
+      }
     }
 
-    if (photos.length === 0) return [];
-    return photos.map((p: any) => p.url || p.Url).filter((url: string) => !!url);
+    if (photos.length === 0) {
+      let coverUrl = court.coverPhotoUrl || court.CoverPhotoUrl;
+      if (coverUrl) return [coverUrl];
+      return [];
+    }
+    
+    // API might return an array of objects {url: '...'} or an array of strings
+    return photos.map((p: any) => typeof p === 'string' ? p : (p.url || p.Url)).filter((url: string) => !!url);
   }
 
   nextPhoto(event: Event, court: any) {
