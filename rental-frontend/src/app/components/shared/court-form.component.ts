@@ -22,12 +22,12 @@ export interface DisplayPhoto {
         <h3 class="section-title">Temel Bilgiler</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label>Saha Adı</label>
+            <label class="required-field">Saha Adı</label>
             <input type="text" formControlName="name" placeholder="Örn: Merkez Spor Tesisleri">
           </div>
           
           <div class="form-group">
-            <label>Spor Türü</label>
+            <label class="required-field">Spor Türü</label>
             <select formControlName="sportType" (change)="onSportTypeChange()">
               <option value="Futbol">Futbol</option>
               <option value="Basketbol">Basketbol</option>
@@ -37,7 +37,7 @@ export interface DisplayPhoto {
           </div>
           
           <div class="form-group">
-            <label>Zemin Türü</label>
+            <label class="required-field">Zemin Türü</label>
             <select formControlName="surfaceType">
               <option value="" disabled selected>-- Zemin Seçin --</option>
               <option *ngFor="let st of availableSurfaceTypes" [value]="st">{{ st }}</option>
@@ -57,13 +57,13 @@ export interface DisplayPhoto {
           (addressSelected)="onAddressSelected($event)">
         </app-map-picker>
 
-        <div class="form-grid" style="margin-top: 15px;">
+        <div class="form-group" style="margin-top: 15px;">
           <div class="form-group">
-            <label>İl</label>
+            <label class="required-field">İl</label>
             <input type="text" formControlName="city" readonly class="readonly-input" placeholder="">
           </div>
           <div class="form-group">
-            <label>İlçe</label>
+            <label class="required-field">İlçe</label>
             <input type="text" formControlName="district" readonly class="readonly-input" placeholder="">
           </div>
           <div class="form-group">
@@ -155,6 +155,12 @@ export interface DisplayPhoto {
         </div>
       </div>
 
+      <!-- HATA MESAJI -->
+      <div class="error-box" *ngIf="showValidationMessage">
+        <div class="error-content">Lütfen tüm zorunlu (*) alanları doldurun.
+        </div>
+      </div>
+
       <!-- BUTONLAR -->
       <div class="button-group">
         <button type="button" class="btn-cancel" *ngIf="showCancel" (click)="onCancel()">İptal Et</button>
@@ -172,9 +178,15 @@ export interface DisplayPhoto {
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
     .full-width { grid-column: 1 / -1; }
     .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+    .required-field::after { content: ' *'; color: #ef4444; font-weight: 700; margin-left: 2px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; box-sizing: border-box; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #3b82f6; }
+    .form-group input.ng-invalid.ng-touched, .form-group select.ng-invalid.ng-touched, .form-group textarea.ng-invalid.ng-touched { border-color: #ef4444; background-color: #fef2f2; }
     
+    .error-box { background: #fef2f2; border: 1px solid #f87171; color: #b91c1c; padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 12px; margin-bottom: 15px; font-size: 14px; animation: slideIn 0.3s ease-out; }
+    .error-icon { font-size: 18px; }
+    .error-content { flex: 1; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
     .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #334155; font-weight: 500; cursor: pointer; }
     .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
@@ -245,6 +257,7 @@ export class CourtFormComponent implements OnInit {
   displayPhotos: DisplayPhoto[] = [];
   deletedPhotoIds: string[] = []; // ID of photos to delete on server
   isDraggingOver = false;
+  showValidationMessage = false;
 
   constructor(private fb: FormBuilder) {
     this.sahaForm = this.fb.group({
@@ -450,6 +463,7 @@ export class CourtFormComponent implements OnInit {
   onSubmit() {
     if (this.sahaForm.invalid) {
       this.sahaForm.markAllAsTouched();
+      this.showValidationMessage = true;
       return;
     }
 
@@ -498,6 +512,10 @@ export class CourtFormComponent implements OnInit {
 
   onCancel() {
     this.formCancel.emit();
+  }
+
+  closeValidationMessage() {
+    this.showValidationMessage = false;
   }
 
   calculateBitwiseAmenities(ag: any): number {

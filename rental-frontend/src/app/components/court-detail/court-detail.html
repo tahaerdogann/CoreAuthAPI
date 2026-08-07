@@ -3,7 +3,16 @@
     Yükleniyor...
   </div>
 
-  <div *ngIf="!isLoading && court" style="max-width: 1000px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap;">
+  <div *ngIf="!isLoading && pageError" style="max-width: 600px; margin: 40px auto; background-color: #fef2f2; border: 1px solid #f87171; border-radius: 8px; padding: 30px; text-align: center; color: #b91c1c; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <div style="width: 60px; height: 60px; background-color: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+    <h2 style="margin-top: 0; font-size: 22px;">Uyarı</h2>
+    <p style="font-size: 16px; margin-bottom: 25px;">{{ pageError }}</p>
+    <a href="/home" style="text-decoration: none; display: inline-block; padding: 10px 20px; background-color: #ef4444; color: white; border-radius: 6px; font-weight: bold; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">Ana Sayfaya Dön</a>
+  </div>
+
+  <div *ngIf="!isLoading && court && !pageError" style="max-width: 1000px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap;">
     
     <!-- Sol Taraf: Saha Detayları -->
     <div style="flex: 1; min-width: 300px;">

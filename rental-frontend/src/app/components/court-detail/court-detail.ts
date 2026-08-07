@@ -50,6 +50,8 @@ export class CourtDetailComponent implements OnInit {
     });
   }
 
+  pageError: string = '';
+
   loadCourtDetails() {
     this.http.get(`${environment.apiUrl}/Courts/${this.courtId}`).subscribe({
       next: (data: any) => {
@@ -70,6 +72,7 @@ export class CourtDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('Saha detayları yüklenemedi:', err);
+        this.pageError = err.error?.message || 'Saha bulunamadı veya bir hata oluştu.';
         this.isLoading = false;
         this.cdr.detectChanges();
       }

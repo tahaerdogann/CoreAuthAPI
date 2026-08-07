@@ -77,7 +77,7 @@ namespace CoreAuthAPI.Controllers
 
             List<Court> myCourts = _context.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
-                .Where(c => c.OwnerId == userId).ToList();
+                .Where(c => c.OwnerId == userId && c.IsActive).ToList();
 
             return Ok(myCourts);
         }
@@ -132,9 +132,13 @@ namespace CoreAuthAPI.Controllers
         {
             var court = _context.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
-                .FirstOrDefault(c => c.Id == id && c.IsActive);
+                .FirstOrDefault(c => c.Id == id);
+                
             if (court == null)
-                return NotFound("Saha bulunamadı.");
+                return NotFound(new { message = "Saha bulunamadı." });
+
+            if (!court.IsActive)
+                return BadRequest(new { message = "Bu saha sistemden kaldırılmıştır ve artık kiralanamaz." });
 
             return Ok(court);
         }
@@ -337,44 +341,29 @@ namespace CoreAuthAPI.Controllers
             if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
                 return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
 
-            bool hasBookedSlots = _context.CourtSlots.Any(s => s.CourtId == id && s.IsBooked);
-            if (hasBookedSlots)
-                return BadRequest("Bu sahanın aktif (dolu) rezervasyonları bulunduğu için silinemez!");
+            // Sadece gelecekteki dolu rezervasyonları kontrol et
+            bool hasFutureBookedSlots = _context.CourtSlots.Any(s => s.CourtId == id && s.IsBooked && s.StartTime >= DateTime.Now);
+            if (hasFutureBookedSlots)
+                return BadRequest("Bu sahanın gelecekte aktif (dolu) rezervasyonları bulunduğu için silinemez!");
 
-            var slots = _context.CourtSlots.Where(s => s.CourtId == id).ToList();
+            // Sahayı pasife al (Soft Delete)
+            court.IsActive = false;
+
+            // Gelecekteki BOŞ seansları sil (çünkü saha artık kiralanamaz)
+            var futureUnbookedSlots = _context.CourtSlots
+                .Where(s => s.CourtId == id && !s.IsBooked && s.StartTime >= DateTime.Now)
+                .ToList();
+            _context.CourtSlots.RemoveRange(futureUnbookedSlots);
+
+            // Otomatik uzatmayı kapat
             var schedules = _context.CourtSchedules.Where(s => s.CourtId == id).ToList();
-            var photos = _context.CourtPhotos.Where(p => p.CourtId == id).ToList();
-
-            // 1. Cloudinary'den fotoğrafları sil
-            if (photos.Any())
+            foreach (var sched in schedules)
             {
-                var cloudName = _configuration["Cloudinary:CloudName"];
-                var apiKey = _configuration["Cloudinary:ApiKey"];
-                var apiSecret = _configuration["Cloudinary:ApiSecret"];
-
-                if (!string.IsNullOrEmpty(cloudName) && !string.IsNullOrEmpty(apiKey) && !string.IsNullOrEmpty(apiSecret))
-                {
-                    Account account = new Account(cloudName, apiKey, apiSecret);
-                    Cloudinary cloudinary = new Cloudinary(account);
-
-                    foreach (var photo in photos)
-                    {
-                        if (!string.IsNullOrEmpty(photo.PublicId))
-                        {
-                            var delParams = new DeletionParams(photo.PublicId);
-                            cloudinary.Destroy(delParams);
-                        }
-                    }
-                }
+                sched.IsAutoScheduleEnabled = false;
             }
 
-            // 2. Veritabanından sil
-            _context.CourtSlots.RemoveRange(slots);
-            _context.CourtSchedules.RemoveRange(schedules);
-            _context.Courts.Remove(court);
-            
             _context.SaveChanges();
-            return Ok(new { message = "Saha ve tüm boş takvimleri başarıyla silindi." });
+            return Ok(new { message = "Saha pasife alındı ve gelecekteki boş seanslar temizlendi." });
         }
 
         [HttpPut("{id:guid}")]
