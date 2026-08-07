@@ -232,7 +232,7 @@ export class CourtFormComponent implements OnInit {
       surfaceType: ['', Validators.required],
       city: ['', Validators.required],
       district: ['', Validators.required],
-      neighborhood: ['', Validators.required],
+      neighborhood: [''],
       addressDetail: [''],
       description: [''],
       latitude: [null as number | null],

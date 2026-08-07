@@ -54,7 +54,7 @@
         </div>
 
         <div style="color: #34495e; font-size: 15px; margin-bottom: 20px; line-height: 1.5;">
-          <strong>📍 Adres:</strong> {{ court.addressDetail }}, {{ court.neighborhood }}, {{ court.district }} / {{ court.city }}
+          <strong>📍 Adres:</strong> {{ court.addressDetail }}{{ court.neighborhood ? ', ' + court.neighborhood : '' }}, {{ court.district }} / {{ court.city }}
         </div>
 
         <div *ngIf="court.description" style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; margin-bottom: 25px; border-radius: 0 8px 8px 0; color: #475569; font-size: 15px; line-height: 1.6;">
