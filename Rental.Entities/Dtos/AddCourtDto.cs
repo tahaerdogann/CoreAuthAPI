@@ -12,6 +12,8 @@ namespace Rental.Entities.Dtos
         public string Neighborhood { get; set; } = string.Empty;
         public string AddressDetail { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public FacilityAmenities Amenities { get; set; }
         public string RentalOptionsJson { get; set; } = string.Empty;
         public List<CourtPhotoDto> Photos { get; set; } = new();

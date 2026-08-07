@@ -323,6 +323,8 @@ export class OwnerDashboardComponent implements OnInit {
         neighborhood: payload.neighborhood,
         addressDetail: payload.addressDetail,
         description: payload.description,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
         hourlyPrice: payload.hourlyPrice,
         amenities: payload.amenities,
         rentalOptionsJson: payload.rentalOptionsJson,

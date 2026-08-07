@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MapPickerComponent, MapAddressResult } from './map-picker.component';
 
 @Component({
   selector: 'app-court-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MapPickerComponent],
   template: `
     <form [formGroup]="sahaForm" (ngSubmit)="onSubmit()" class="form-container">
       
@@ -41,31 +42,30 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
       <!-- LOKASYON BİLGİLERİ -->
       <div class="section-card">
         <h3 class="section-title">Lokasyon Bilgileri</h3>
-        <div class="form-grid">
+        
+        <app-map-picker
+          [mode]="'picker'"
+          [latitude]="sahaForm.get('latitude')?.value"
+          [longitude]="sahaForm.get('longitude')?.value"
+          (addressSelected)="onAddressSelected($event)">
+        </app-map-picker>
+
+        <div class="form-grid" style="margin-top: 15px;">
           <div class="form-group">
             <label>İl</label>
-            <select formControlName="city" (change)="onCityChange($event)">
-              <option value="">İl Seçin</option>
-              <option *ngFor="let c of sehirler" [value]="c">{{c}}</option>
-            </select>
+            <input type="text" formControlName="city" readonly class="readonly-input" placeholder="Haritadan seçilecek">
           </div>
           <div class="form-group">
             <label>İlçe</label>
-            <select formControlName="district" (change)="onDistrictChange($event)">
-              <option value="">İlçe Seçin</option>
-              <option *ngFor="let d of aktifIlceler" [value]="d">{{d}}</option>
-            </select>
+            <input type="text" formControlName="district" readonly class="readonly-input" placeholder="Haritadan seçilecek">
           </div>
           <div class="form-group">
             <label>Mahalle</label>
-            <select formControlName="neighborhood">
-              <option value="">Mahalle Seçin</option>
-              <option *ngFor="let m of aktifMahalleler" [value]="m">{{m}}</option>
-            </select>
+            <input type="text" formControlName="neighborhood" readonly class="readonly-input" placeholder="Haritadan seçilecek">
           </div>
           <div class="form-group full-width">
             <label>Açık Adres</label>
-            <textarea formControlName="addressDetail" rows="2" placeholder="Gönülden sok. 18/20"></textarea>
+            <textarea formControlName="addressDetail" rows="2" placeholder="Haritadan otomatik doldurulacak, elle düzenleyebilirsiniz"></textarea>
           </div>
           <div class="form-group full-width">
             <label>Saha Açıklaması</label>
@@ -202,6 +202,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
     .btn-remove { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
     .btn-remove:hover { background: #b91c1c; }
     .cover-badge { position: absolute; bottom: 5px; left: 5px; background: #10b981; color: white; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+    .readonly-input { background: #f8fafc !important; color: #64748b; cursor: not-allowed; }
   `]
 })
 export class CourtFormComponent implements OnInit {
@@ -215,20 +216,7 @@ export class CourtFormComponent implements OnInit {
 
   sahaForm: FormGroup;
   
-  sehirler = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya'];
-  ilceler: { [key: string]: string[] } = {
-    'İstanbul': ['Kadıköy', 'Beşiktaş', 'Şişli', 'Üsküdar', 'Maltepe'],
-    'Ankara': ['Çankaya', 'Keçiören', 'Yenimahalle'],
-    'İzmir': ['Karşıyaka', 'Bornova', 'Buca']
-  };
-  mahalleler: { [key: string]: string[] } = {
-    'Kadıköy': ['Caferağa', 'Moda', 'Fenerbahçe', 'Bostancı'],
-    'Beşiktaş': ['Bebek', 'Levent', 'Etiler'],
-    'Çankaya': ['Kızılay', 'Bahçelievler', 'Çayyolu']
-  };
 
-  aktifIlceler: string[] = [];
-  aktifMahalleler: string[] = [];
   availableSurfaceTypes: string[] = [];
   activeRentalOptionsKeys: string[] = [];
   
@@ -247,6 +235,8 @@ export class CourtFormComponent implements OnInit {
       neighborhood: ['', Validators.required],
       addressDetail: [''],
       description: [''],
+      latitude: [null as number | null],
+      longitude: [null as number | null],
       amenities: this.fb.group({
         restroom: [false], cafeteria: [false], disabledAccess: [false],
         changingRoom: [false], wifi: [false], shower: [false],
@@ -275,13 +265,6 @@ export class CourtFormComponent implements OnInit {
   }
 
   populateForm(data: any) {
-    if (data.city) {
-      this.aktifIlceler = this.ilceler[data.city] || [];
-    }
-    if (data.district) {
-      this.aktifMahalleler = this.mahalleler[data.district] || [];
-    }
-    
     // Set basic fields
     this.sahaForm.patchValue({
       name: data.name || '',
@@ -290,7 +273,9 @@ export class CourtFormComponent implements OnInit {
       district: data.district || '',
       neighborhood: data.neighborhood || '',
       addressDetail: data.addressDetail || '',
-      description: data.description || ''
+      description: data.description || '',
+      latitude: data.latitude || null,
+      longitude: data.longitude || null
     });
 
     this.onSportTypeChange(); // Load surface and rental options for sport
@@ -327,17 +312,15 @@ export class CourtFormComponent implements OnInit {
     }
   }
 
-  onCityChange(event: any) {
-    const selectedCity = event.target.value;
-    this.aktifIlceler = this.ilceler[selectedCity] || [];
-    this.sahaForm.patchValue({ district: '', neighborhood: '' });
-    this.aktifMahalleler = [];
-  }
-
-  onDistrictChange(event: any) {
-    const selectedDistrict = event.target.value;
-    this.aktifMahalleler = this.mahalleler[selectedDistrict] || [];
-    this.sahaForm.patchValue({ neighborhood: '' });
+  onAddressSelected(result: MapAddressResult) {
+    this.sahaForm.patchValue({
+      city: result.city,
+      district: result.district,
+      neighborhood: result.neighborhood,
+      addressDetail: result.fullAddress,
+      latitude: result.latitude,
+      longitude: result.longitude
+    });
   }
 
   onSportTypeChange() {
@@ -441,6 +424,8 @@ export class CourtFormComponent implements OnInit {
       neighborhood: rawValue.neighborhood,
       addressDetail: rawValue.addressDetail,
       description: rawValue.description,
+      latitude: rawValue.latitude,
+      longitude: rawValue.longitude,
       hourlyPrice: 0,
       amenities: this.calculateBitwiseAmenities(rawValue.amenities),
       rentalOptionsJson: JSON.stringify(activeRentals),

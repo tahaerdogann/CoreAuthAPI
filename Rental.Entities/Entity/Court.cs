@@ -17,6 +17,9 @@ namespace Rental.Entities.Entity
 
         public FacilityAmenities Amenities { get; set; } = FacilityAmenities.None;
         public string RentalOptionsJson { get; set; } = string.Empty;
+        
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
 
         public bool IsActive { get; set; } = true;
         public Guid OwnerId { get; set; }

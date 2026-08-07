@@ -5,11 +5,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth';
 import { FavoriteService } from '../../services/favorite';
+import { MapPickerComponent } from '../shared/map-picker.component';
 
 @Component({
   selector: 'app-court-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MapPickerComponent],
   templateUrl: './court-detail.html',
   styleUrls: ['./court-detail.css']
 })

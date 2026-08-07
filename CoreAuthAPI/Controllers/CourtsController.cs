@@ -49,6 +49,8 @@ namespace CoreAuthAPI.Controllers
                 Description = request.Description,
                 Amenities = request.Amenities,
                 RentalOptionsJson = request.RentalOptionsJson ?? "{}",
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
                 OwnerId = userId,
                 IsActive = true,
                 Photos = request.Photos?.Select(p => new CourtPhoto 
@@ -113,6 +115,8 @@ namespace CoreAuthAPI.Controllers
                                 .Min(s => (decimal?)s.Price) ?? 0,
                 c.Amenities,
                 c.RentalOptionsJson,
+                c.Latitude,
+                c.Longitude,
                 c.OwnerId,
                 c.IsActive,
                 CoverPhotoUrl = c.Photos.OrderByDescending(p => p.IsCover).FirstOrDefault() != null ? c.Photos.OrderByDescending(p => p.IsCover).FirstOrDefault().Url : null
@@ -399,6 +403,8 @@ namespace CoreAuthAPI.Controllers
             court.Description = request.Description;
             court.Amenities = request.Amenities;
             court.RentalOptionsJson = request.RentalOptionsJson ?? "{}";
+            court.Latitude = request.Latitude;
+            court.Longitude = request.Longitude;
 
             if (request.Photos != null && request.Photos.Any())
             {

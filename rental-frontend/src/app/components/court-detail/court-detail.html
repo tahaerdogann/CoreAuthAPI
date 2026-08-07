@@ -44,6 +44,15 @@
           </div>
         </div>
 
+        <!-- HARİTA -->
+        <div *ngIf="court.latitude && court.longitude" style="margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+          <app-map-picker
+            [mode]="'display'"
+            [latitude]="court.latitude"
+            [longitude]="court.longitude">
+          </app-map-picker>
+        </div>
+
         <div style="color: #34495e; font-size: 15px; margin-bottom: 20px; line-height: 1.5;">
           <strong>📍 Adres:</strong> {{ court.addressDetail }}, {{ court.neighborhood }}, {{ court.district }} / {{ court.city }}
         </div>
