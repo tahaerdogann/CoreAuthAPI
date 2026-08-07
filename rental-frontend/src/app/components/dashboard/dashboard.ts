@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+
+declare var google: any;
 
 @Component({
   selector: 'app-dashboard',
@@ -12,25 +14,76 @@ import { environment } from '../../../environments/environment';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, AfterViewInit {
   sahaListesi: any[] = [];
   
+  @ViewChild('addressInput') addressInput!: ElementRef;
+
   // Arama filtreleri
   searchLocation: string = '';
   searchSportType: string = '';
+  
+  lat: number | null = null;
+  lng: number | null = null;
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private router: Router, private ngZone: NgZone) { }
 
   ngOnInit() {
     this.sahalarıYukle();
+  }
+
+  ngAfterViewInit() {
+    this.initAutocomplete();
+  }
+
+  initAutocomplete() {
+    if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(this.addressInput.nativeElement, {
+      types: ['geocode', 'establishment']
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      this.ngZone.run(() => {
+        const place = autocomplete.getPlace();
+        if (place.geometry && place.geometry.location) {
+          this.lat = place.geometry.location.lat();
+          this.lng = place.geometry.location.lng();
+          this.searchLocation = place.formatted_address || place.name || '';
+          this.onSearch();
+        }
+      });
+    });
+  }
+
+  getUserLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.ngZone.run(() => {
+            this.lat = position.coords.latitude;
+            this.lng = position.coords.longitude;
+            this.searchLocation = 'Mevcut Konumum';
+            this.onSearch();
+          });
+        },
+        (error) => {
+          console.error("Konum alınamadı:", error);
+          alert("Konumunuz alınamadı. Lütfen tarayıcı izinlerinizi kontrol edin.");
+        }
+      );
+    } else {
+      alert("Tarayıcınız konum servisini desteklemiyor.");
+    }
   }
 
   sahalarıYukle() {
     let url = `${environment.apiUrl}/Courts/search`;
     let queryParams = [];
     
-    if (this.searchLocation.trim()) {
-      queryParams.push(`city=${encodeURIComponent(this.searchLocation.trim())}`);
+    if (this.lat !== null && this.lng !== null) {
+      queryParams.push(`lat=${this.lat}`);
+      queryParams.push(`lng=${this.lng}`);
     }
     if (this.searchSportType) {
       queryParams.push(`sportType=${encodeURIComponent(this.searchSportType)}`);
@@ -50,8 +103,8 @@ export class Dashboard implements OnInit {
     });
   }
 
-  getCoverPhoto(court: any): string | null {
-    if (!court || !court.photos) return null;
+  getPhotos(court: any): string[] {
+    if (!court || !court.photos) return [];
     
     let photos = [];
     if (court.photos.$values) {
@@ -60,12 +113,24 @@ export class Dashboard implements OnInit {
       photos = court.photos;
     }
 
-    if (photos.length === 0) return null;
+    if (photos.length === 0) return [];
+    return photos.map((p: any) => p.url || p.Url).filter((url: string) => !!url);
+  }
 
-    const cover = photos.find((p: any) => p.isCover);
-    if (cover) return cover.url;
+  nextPhoto(event: Event, court: any) {
+    event.stopPropagation();
+    const photos = this.getPhotos(court);
+    if (photos.length <= 1) return;
+    if (court._currentPhotoIndex === undefined) court._currentPhotoIndex = 0;
+    court._currentPhotoIndex = (court._currentPhotoIndex + 1) % photos.length;
+  }
 
-    return photos[0].url;
+  prevPhoto(event: Event, court: any) {
+    event.stopPropagation();
+    const photos = this.getPhotos(court);
+    if (photos.length <= 1) return;
+    if (court._currentPhotoIndex === undefined) court._currentPhotoIndex = 0;
+    court._currentPhotoIndex = (court._currentPhotoIndex - 1 + photos.length) % photos.length;
   }
 
   onSearch() {

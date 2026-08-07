@@ -22,7 +22,7 @@ button {
   transition: all 0.3s ease;
 }
 
-  button:hover {
+  button:not(.carousel-btn):hover {
     opacity: 0.9;
     transform: translateY(-1px);
   }
@@ -34,8 +34,29 @@ button {
 /* İnput ve Select Odaklanma (Focus) Efektleri */
 input:focus, select:focus {
   outline: none;
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Court Card & Carousel */
+.court-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.court-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important;
+}
+
+.card-image-container .carousel-btn {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease;
+}
+
+.card-image-container:hover .carousel-btn {
+  opacity: 1 !important;
+  visibility: visible;
 }
 
 /* Slot Kartları için Hover Efekti */

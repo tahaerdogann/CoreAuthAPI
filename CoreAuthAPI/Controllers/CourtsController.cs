@@ -84,24 +84,19 @@ namespace CoreAuthAPI.Controllers
 
         [HttpGet("search")]
         [AllowAnonymous]
-        public IActionResult Search([FromQuery] string? city, [FromQuery] string? sportType)
+        public IActionResult Search([FromQuery] double? lat, [FromQuery] double? lng, [FromQuery] string? sportType)
         {
             // Sadece aktif olan ve gelecekte en az 1 slotu olan sahaları getir
             var query = _context.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
                 .Where(c => c.IsActive && _context.CourtSlots.Any(s => s.CourtId == c.Id && s.StartTime >= DateTime.Now));
 
-            if (!string.IsNullOrEmpty(city))
-            {
-                query = query.Where(c => c.City.Contains(city) || c.District.Contains(city) || c.Neighborhood.Contains(city));
-            }
-
             if (!string.IsNullOrEmpty(sportType))
             {
                 query = query.Where(c => c.SportType == sportType);
             }
 
-            var results = query.Select(c => new {
+            var dbResults = query.Select(c => new {
                 c.Id,
                 c.Name,
                 c.SportType,
@@ -123,7 +118,52 @@ namespace CoreAuthAPI.Controllers
                 CoverPhotoUrl = c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover) != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover).Url : (c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault() != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault().Url : null)
             }).ToList();
 
-            return Ok(results);
+            var finalResults = dbResults.Select(r => new {
+                r.Id,
+                r.Name,
+                r.SportType,
+                r.SurfaceType,
+                r.City,
+                r.District,
+                r.Neighborhood,
+                r.AddressDetail,
+                r.Description,
+                r.HourlyPrice,
+                r.Amenities,
+                r.RentalOptionsJson,
+                r.Latitude,
+                r.Longitude,
+                r.OwnerId,
+                r.IsActive,
+                r.CoverPhotoUrl,
+                DistanceKm = (lat.HasValue && lng.HasValue && r.Latitude.HasValue && r.Longitude.HasValue) 
+                             ? CalculateDistance(lat.Value, lng.Value, r.Latitude.Value, r.Longitude.Value) 
+                             : (double?)null
+            });
+
+            if (lat.HasValue && lng.HasValue)
+            {
+                finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
+            }
+
+            return Ok(finalResults.ToList());
+        }
+
+        private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            var R = 6371; // Radius of the earth in km
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        private double ToRadians(double angle)
+        {
+            return Math.PI * angle / 180.0;
         }
 
         [HttpGet("{id:guid}")]
