@@ -2,11 +2,18 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MapPickerComponent, MapAddressResult } from './map-picker.component';
+import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag } from '@angular/cdk/drag-drop';
+
+export interface DisplayPhoto {
+  file?: File;
+  existingData?: any;
+  url: string;
+}
 
 @Component({
   selector: 'app-court-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MapPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MapPickerComponent, CdkDropList, CdkDrag],
   template: `
     <form [formGroup]="sahaForm" (ngSubmit)="onSubmit()" class="form-container">
       
@@ -53,19 +60,19 @@ import { MapPickerComponent, MapAddressResult } from './map-picker.component';
         <div class="form-grid" style="margin-top: 15px;">
           <div class="form-group">
             <label>İl</label>
-            <input type="text" formControlName="city" readonly class="readonly-input" placeholder="Haritadan seçilecek">
+            <input type="text" formControlName="city" readonly class="readonly-input" placeholder="">
           </div>
           <div class="form-group">
             <label>İlçe</label>
-            <input type="text" formControlName="district" readonly class="readonly-input" placeholder="Haritadan seçilecek">
+            <input type="text" formControlName="district" readonly class="readonly-input" placeholder="">
           </div>
           <div class="form-group">
             <label>Mahalle</label>
-            <input type="text" formControlName="neighborhood" readonly class="readonly-input" placeholder="Haritadan seçilecek">
+            <input type="text" formControlName="neighborhood" readonly class="readonly-input" placeholder="">
           </div>
           <div class="form-group full-width">
             <label>Açık Adres</label>
-            <textarea formControlName="addressDetail" rows="2" placeholder="Haritadan otomatik doldurulacak, elle düzenleyebilirsiniz"></textarea>
+            <textarea formControlName="addressDetail" rows="2" placeholder="cadde, sokak, numara"></textarea>
           </div>
           <div class="form-group full-width">
             <label>Saha Açıklaması</label>
@@ -122,26 +129,28 @@ import { MapPickerComponent, MapAddressResult } from './map-picker.component';
         <h3 class="section-title">Saha Fotoğrafları</h3>
         <p class="section-subtitle">En fazla 16 adet fotoğraf ekleyebilirsiniz. İlk fotoğraf kapak olarak kullanılacaktır.</p>
         
-        <div class="file-upload-container">
-          <input type="file" id="photos" multiple accept="image/*" (change)="onFileSelected($event)" class="file-input" [disabled]="selectedFiles.length + existingPhotos.length >= 16">
-          <label for="photos" class="file-label" [class.disabled]="selectedFiles.length + existingPhotos.length >= 16">
+        <div class="file-upload-container" 
+             (dragover)="onDragOver($event)" 
+             (dragleave)="onDragLeave($event)" 
+             (drop)="onFileDrop($event)"
+             [class.drag-over]="isDraggingOver">
+          <input type="file" id="photos" multiple accept="image/*" (change)="onFileSelected($event)" class="file-input" [disabled]="displayPhotos.length >= 16">
+          <label for="photos" class="file-label" [class.disabled]="displayPhotos.length >= 16">
             <span class="upload-icon">📸</span>
             <span>Fotoğraf Seç veya Sürükle</span>
           </label>
         </div>
 
-        <div class="photo-preview-grid" *ngIf="selectedFiles.length > 0 || existingPhotos.length > 0">
-          <!-- Mevcut Fotoğraflar (Edit Modu) -->
-          <div class="photo-thumbnail" *ngFor="let photo of existingPhotos; let i = index">
+        <div class="photo-preview-grid" *ngIf="displayPhotos.length > 0" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="dropPhoto($event)">
+          <div class="photo-thumbnail" *ngFor="let photo of displayPhotos; let i = index" cdkDrag [class.new-photo]="photo.file">
             <img [src]="photo.url" alt="Saha Fotoğrafı">
+            
+            <div class="photo-overlay">
+              <button type="button" class="btn-cover" *ngIf="i !== 0" (click)="setAsCover(i)">Kapak Yap</button>
+            </div>
+            
             <div class="cover-badge" *ngIf="i === 0">Kapak</div>
-            <button type="button" class="btn-remove" (click)="removeExistingPhoto(photo)">×</button>
-          </div>
-          <!-- Yeni Seçilen Fotoğraflar -->
-          <div class="photo-thumbnail new-photo" *ngFor="let file of selectedFiles; let i = index">
-            <img [src]="getFileUrl(file)" alt="Yeni Fotoğraf">
-            <div class="cover-badge" *ngIf="existingPhotos.length === 0 && i === 0">Kapak</div>
-            <button type="button" class="btn-remove" (click)="removeSelectedFile(i)">×</button>
+            <button type="button" class="btn-remove" (click)="removePhoto(i)">×</button>
           </div>
         </div>
       </div>
@@ -189,6 +198,7 @@ import { MapPickerComponent, MapAddressResult } from './map-picker.component';
 
     /* FOTOĞRAF YÜKLEME ALANI */
     .file-upload-container { margin-bottom: 20px; position: relative; }
+    .file-upload-container.drag-over .file-label { border-color: #10b981; background: #ecfdf5; color: #047857; }
     .file-input { width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1; }
     .file-label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; border: 2px dashed #94a3b8; border-radius: 12px; background: #f8fafc; cursor: pointer; transition: all 0.2s; color: #475569; font-weight: 600; }
     .file-label:hover:not(.disabled) { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
@@ -196,13 +206,25 @@ import { MapPickerComponent, MapAddressResult } from './map-picker.component';
     .upload-icon { font-size: 32px; margin-bottom: 8px; }
     
     .photo-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }
-    .photo-thumbnail { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .photo-thumbnail { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: move; }
     .photo-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-thumbnail.new-photo img { filter: sepia(0.2); } /* Yeni fotoları hafif belli etmek için */
-    .btn-remove { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+    .photo-thumbnail.new-photo img { filter: sepia(0.2); }
+    
+    .photo-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .photo-thumbnail:hover .photo-overlay { opacity: 1; pointer-events: auto; }
+    .btn-cover { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; }
+    .btn-cover:hover { background: #059669; }
+    
+    .btn-remove { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; z-index: 2; }
     .btn-remove:hover { background: #b91c1c; }
-    .cover-badge { position: absolute; bottom: 5px; left: 5px; background: #10b981; color: white; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+    .cover-badge { position: absolute; bottom: 5px; left: 5px; background: #10b981; color: white; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; z-index: 2;}
     .readonly-input { background: #f8fafc !important; color: #64748b; cursor: not-allowed; }
+    
+    .cdk-drag-preview { box-sizing: border-box; border-radius: 8px; box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4); overflow: hidden; }
+    .cdk-drag-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .cdk-drag-placeholder { opacity: 0; }
+    .cdk-drag-animating { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }
+    .photo-preview-grid.cdk-drop-list-dragging .photo-thumbnail:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }
   `]
 })
 export class CourtFormComponent implements OnInit {
@@ -220,10 +242,9 @@ export class CourtFormComponent implements OnInit {
   availableSurfaceTypes: string[] = [];
   activeRentalOptionsKeys: string[] = [];
   
-  selectedFiles: File[] = [];
-  existingPhotos: any[] = [];
+  displayPhotos: DisplayPhoto[] = [];
   deletedPhotoIds: string[] = []; // ID of photos to delete on server
-  fileUrls: Map<File, string> = new Map();
+  isDraggingOver = false;
 
   constructor(private fb: FormBuilder) {
     this.sahaForm = this.fb.group({
@@ -306,9 +327,11 @@ export class CourtFormComponent implements OnInit {
 
     // Set photos
     if (data.photos && Array.isArray(data.photos)) {
-      this.existingPhotos = [...data.photos];
-      // sort so cover is first
-      this.existingPhotos.sort((a, b) => (b.isCover ? 1 : 0) - (a.isCover ? 1 : 0));
+      const sortedPhotos = [...data.photos].sort((a, b) => a.displayOrder - b.displayOrder);
+      this.displayPhotos = sortedPhotos.map(p => ({
+        existingData: p,
+        url: p.url
+      }));
     }
   }
 
@@ -356,38 +379,72 @@ export class CourtFormComponent implements OnInit {
     return map[key] || key;
   }
 
+  // --- DRAG & DROP FOTO YÜKLEME ---
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = false;
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = false;
+    
+    if (event.dataTransfer && event.dataTransfer.files) {
+      this.handleFiles(event.dataTransfer.files);
+    }
+  }
+
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
-    if (files) {
-      const remainingSlots = 16 - (this.selectedFiles.length + this.existingPhotos.length);
-      const limit = Math.min(files.length, remainingSlots);
-      
-      for (let i = 0; i < limit; i++) {
-        const file = files[i];
-        this.selectedFiles.push(file);
-        // Önizleme için URL oluştur
-        this.fileUrls.set(file, URL.createObjectURL(file));
-      }
-    }
-    // reset input
+    this.handleFiles(files);
     event.target.value = '';
   }
 
-  getFileUrl(file: File): string {
-    return this.fileUrls.get(file) || '';
+  handleFiles(files: FileList) {
+    if (!files) return;
+    
+    const remainingSlots = 16 - this.displayPhotos.length;
+    const limit = Math.min(files.length, remainingSlots);
+    
+    for (let i = 0; i < limit; i++) {
+      const file = files[i];
+      if (!file.type.startsWith('image/')) continue; // Sadece resimler
+      
+      const url = URL.createObjectURL(file);
+      this.displayPhotos.push({
+        file: file,
+        url: url
+      });
+    }
   }
 
-  removeSelectedFile(index: number) {
-    const file = this.selectedFiles[index];
-    const url = this.fileUrls.get(file);
-    if (url) URL.revokeObjectURL(url);
-    this.fileUrls.delete(file);
-    this.selectedFiles.splice(index, 1);
+  removePhoto(index: number) {
+    const photo = this.displayPhotos[index];
+    if (photo.existingData) {
+      this.deletedPhotoIds.push(photo.existingData.id);
+    } else if (photo.file) {
+      URL.revokeObjectURL(photo.url);
+    }
+    this.displayPhotos.splice(index, 1);
   }
 
-  removeExistingPhoto(photo: any) {
-    this.deletedPhotoIds.push(photo.id);
-    this.existingPhotos = this.existingPhotos.filter(p => p.id !== photo.id);
+  // --- CDK DRAG DROP SIRALAMA ---
+  dropPhoto(event: CdkDragDrop<DisplayPhoto[]>) {
+    moveItemInArray(this.displayPhotos, event.previousIndex, event.currentIndex);
+  }
+
+  setAsCover(index: number) {
+    if (index === 0) return;
+    const item = this.displayPhotos.splice(index, 1)[0];
+    this.displayPhotos.unshift(item);
   }
 
   onSubmit() {
@@ -431,8 +488,8 @@ export class CourtFormComponent implements OnInit {
       rentalOptionsJson: JSON.stringify(activeRentals),
       
       // Fotoğraf yükleme işlemleri için eklenen alanlar (Parent Component kullanacak)
-      selectedFiles: this.selectedFiles,
-      existingPhotos: this.existingPhotos,
+      // Fotoğraf yükleme işlemleri için eklenen alanlar (Parent Component kullanacak)
+      displayPhotos: this.displayPhotos,
       deletedPhotoIds: this.deletedPhotoIds
     };
 

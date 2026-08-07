@@ -11,6 +11,7 @@
   "private": true,
   "packageManager": "npm@11.16.0",
   "dependencies": {
+    "@angular/cdk": "^22.1.1",
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",
@@ -18,8 +19,10 @@
     "@angular/google-maps": "^22.1.1",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "@types/uuid": "^10.0.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@angular/build": "^22.0.7",

@@ -57,7 +57,8 @@ namespace CoreAuthAPI.Controllers
                 {
                     Url = p.Url,
                     PublicId = p.PublicId,
-                    IsCover = p.IsCover
+                    IsCover = p.IsCover,
+                    DisplayOrder = p.DisplayOrder
                 }).ToList() ?? new List<CourtPhoto>()
             };
 
@@ -75,7 +76,7 @@ namespace CoreAuthAPI.Controllers
                 return Unauthorized("Geçersiz kullanıcı kimliği.");
 
             List<Court> myCourts = _context.Courts
-                .Include(c => c.Photos)
+                .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
                 .Where(c => c.OwnerId == userId).ToList();
 
             return Ok(myCourts);
@@ -87,7 +88,7 @@ namespace CoreAuthAPI.Controllers
         {
             // Sadece aktif olan ve gelecekte en az 1 slotu olan sahaları getir
             var query = _context.Courts
-                .Include(c => c.Photos)
+                .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
                 .Where(c => c.IsActive && _context.CourtSlots.Any(s => s.CourtId == c.Id && s.StartTime >= DateTime.Now));
 
             if (!string.IsNullOrEmpty(city))
@@ -119,7 +120,7 @@ namespace CoreAuthAPI.Controllers
                 c.Longitude,
                 c.OwnerId,
                 c.IsActive,
-                CoverPhotoUrl = c.Photos.OrderByDescending(p => p.IsCover).FirstOrDefault() != null ? c.Photos.OrderByDescending(p => p.IsCover).FirstOrDefault().Url : null
+                CoverPhotoUrl = c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover) != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault(p => p.IsCover).Url : (c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault() != null ? c.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault().Url : null)
             }).ToList();
 
             return Ok(results);
@@ -130,7 +131,7 @@ namespace CoreAuthAPI.Controllers
         public IActionResult GetCourtById(Guid id)
         {
             var court = _context.Courts
-                .Include(c => c.Photos)
+                .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
                 .FirstOrDefault(c => c.Id == id && c.IsActive);
             if (court == null)
                 return NotFound("Saha bulunamadı.");
@@ -422,19 +423,28 @@ namespace CoreAuthAPI.Controllers
                         .ExecuteUpdate(s => s.SetProperty(p => p.IsCover, true));
                 }
 
-                // 2. Sadece yeni eklenen fotoğrafları veritabanına ekle
+                // 2. Fotoğrafları güncelle veya yeni ekle
                 foreach (var photoDto in request.Photos)
                 {
-                    // court.Photos koleksiyonunu okuyarak kontrol ediyoruz
-                    if (!court.Photos.Any(p => p.PublicId == photoDto.PublicId))
+                    var existingPhoto = court.Photos.FirstOrDefault(p => p.PublicId == photoDto.PublicId);
+                    if (existingPhoto == null)
                     {
                         _context.CourtPhotos.Add(new CourtPhoto
                         {
                             CourtId = court.Id,
                             Url = photoDto.Url,
                             PublicId = photoDto.PublicId,
-                            IsCover = photoDto.IsCover
+                            IsCover = photoDto.IsCover,
+                            DisplayOrder = photoDto.DisplayOrder
                         });
+                    }
+                    else
+                    {
+                        // Sadece sırasını güncelle (IsCover işlemi yukarıda ExecuteUpdate ile yapıldı)
+                        if (existingPhoto.DisplayOrder != photoDto.DisplayOrder)
+                        {
+                            existingPhoto.DisplayOrder = photoDto.DisplayOrder;
+                        }
                     }
                 }
             }

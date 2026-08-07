@@ -26,41 +26,46 @@ export class SahaEkleComponent {
     this.isSubmitting = true;
 
     try {
-      const uploadedPhotos: any[] = [];
-      const selectedFiles: File[] = payload.selectedFiles || [];
-      const existingPhotos: any[] = payload.existingPhotos || [];
+      const displayPhotos: any[] = payload.displayPhotos || [];
+      const finalPhotos: any[] = [];
+      let signatureRes: any = null;
 
-      // Cloudinary'ye Yükleme
-      if (selectedFiles.length > 0) {
-        // İmzayı Backend'den al
-        const signatureRes: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
-        const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
+      // Sadece yeni eklenecek (file) olanlar için imza al (Eğer varsa)
+      const hasNewFiles = displayPhotos.some(p => p.file);
+      if (hasNewFiles) {
+        signatureRes = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
+      }
 
-        for (let file of selectedFiles) {
+      for (let i = 0; i < displayPhotos.length; i++) {
+        const item = displayPhotos[i];
+        const isCover = (i === 0);
+        
+        if (item.file) {
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
           const formData = new FormData();
-          formData.append('file', file);
+          formData.append('file', item.file);
           formData.append('api_key', signatureRes.apiKey);
           formData.append('timestamp', signatureRes.timestamp);
           formData.append('signature', signatureRes.signature);
-          formData.append('folder', signatureRes.folder); // Backend folder bilgisini veriyor
-
+          formData.append('folder', signatureRes.folder);
+          
           const res: any = await firstValueFrom(this.http.post(uploadUrl, formData));
-          uploadedPhotos.push({
+          finalPhotos.push({
             url: res.secure_url,
             publicId: res.public_id,
-            isCover: false // Kapak mantığı daha sonra düzenleniyor
+            isCover: isCover,
+            displayOrder: i
+          });
+        } else if (item.existingData) {
+          finalPhotos.push({
+            ...item.existingData,
+            isCover: isCover,
+            displayOrder: i
           });
         }
       }
 
       this.mesaj = 'Saha kaydediliyor...';
-
-      // Tüm fotoğrafları birleştir (mevcutlar + yeniler)
-      let allPhotos = [...existingPhotos, ...uploadedPhotos];
-      // Eğer hiç kapak yoksa ilk fotoğrafı kapak yap
-      if (allPhotos.length > 0 && !allPhotos.some(p => p.isCover)) {
-        allPhotos[0].isCover = true;
-      }
 
       // API Payload'unu hazırla
       const apiPayload = {
@@ -77,7 +82,7 @@ export class SahaEkleComponent {
         hourlyPrice: payload.hourlyPrice,
         amenities: payload.amenities,
         rentalOptionsJson: payload.rentalOptionsJson,
-        photos: allPhotos
+        photos: finalPhotos
       };
 
       const token = localStorage.getItem('token');

@@ -9,6 +9,7 @@ namespace Rental.Entities.Entity
         public string Url { get; set; } = string.Empty;
         public string PublicId { get; set; } = string.Empty; // Cloudinary'deki silme işlemi için gerekli ID
         public bool IsCover { get; set; } = false;
+        public int DisplayOrder { get; set; } = 0;
         public DateTime UploadDate { get; set; } = DateTime.UtcNow;
 
         [ForeignKey(nameof(CourtId))]

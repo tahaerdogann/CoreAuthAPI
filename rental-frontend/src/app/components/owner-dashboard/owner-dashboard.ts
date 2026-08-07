@@ -281,36 +281,43 @@ export class OwnerDashboardComponent implements OnInit {
       }
 
       // 2. Yeni Fotoğrafları Cloudinary'ye Yükle
-      const uploadedPhotos: any[] = [];
-      const selectedFiles: File[] = payload.selectedFiles || [];
-      const existingPhotos: any[] = payload.existingPhotos || [];
+      const displayPhotos: any[] = payload.displayPhotos || [];
+      const finalPhotos: any[] = [];
+      let signatureRes: any = null;
 
-      if (selectedFiles.length > 0) {
-        // İmzayı Backend'den al
-        const signatureRes: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
-        const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
+      // Sadece yeni eklenecek (file) olanlar için imza al (Eğer varsa)
+      const hasNewFiles = displayPhotos.some(p => p.file);
+      if (hasNewFiles) {
+        signatureRes = await firstValueFrom(this.http.get(`${environment.apiUrl}/Courts/get-upload-signature`));
+      }
 
-        for (let file of selectedFiles) {
+      for (let i = 0; i < displayPhotos.length; i++) {
+        const item = displayPhotos[i];
+        const isCover = (i === 0);
+        
+        if (item.file) {
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureRes.cloudName}/image/upload`;
           const formData = new FormData();
-          formData.append('file', file);
+          formData.append('file', item.file);
           formData.append('api_key', signatureRes.apiKey);
           formData.append('timestamp', signatureRes.timestamp);
           formData.append('signature', signatureRes.signature);
-          formData.append('folder', signatureRes.folder); // Backend folder bilgisini veriyor
-
+          formData.append('folder', signatureRes.folder);
+          
           const res: any = await firstValueFrom(this.http.post(uploadUrl, formData));
-          uploadedPhotos.push({
+          finalPhotos.push({
             url: res.secure_url,
             publicId: res.public_id,
-            isCover: false
+            isCover: isCover,
+            displayOrder: i
+          });
+        } else if (item.existingData) {
+          finalPhotos.push({
+            ...item.existingData,
+            isCover: isCover,
+            displayOrder: i
           });
         }
-      }
-
-      // Tüm fotoğrafları birleştir (kalan mevcutlar + yeniler)
-      let allPhotos = [...existingPhotos, ...uploadedPhotos];
-      if (allPhotos.length > 0 && !allPhotos.some(p => p.isCover)) {
-        allPhotos[0].isCover = true;
       }
 
       // 3. API Payload'unu hazırla ve Kaydet
@@ -328,7 +335,7 @@ export class OwnerDashboardComponent implements OnInit {
         hourlyPrice: payload.hourlyPrice,
         amenities: payload.amenities,
         rentalOptionsJson: payload.rentalOptionsJson,
-        photos: allPhotos
+        photos: finalPhotos
       };
 
       const res: any = await firstValueFrom(this.http.put(`${environment.apiUrl}/Courts/${this.selectedCourtId}`, apiPayload, { headers }));
