@@ -84,16 +84,38 @@ namespace CoreAuthAPI.Controllers
 
         [HttpGet("search")]
         [AllowAnonymous]
-        public IActionResult Search([FromQuery] double? lat, [FromQuery] double? lng, [FromQuery] string? sportType)
+        public IActionResult Search([FromQuery] double? lat, [FromQuery] double? lng, [FromQuery] string? sportTypes, [FromQuery] double? distance, [FromQuery] string? startDate, [FromQuery] string? endDate, [FromQuery] string? startTime, [FromQuery] string? endTime, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice)
         {
-            // Sadece aktif olan ve gelecekte en az 1 slotu olan sahaları getir
+            DateTime? parsedStartDate = null;
+            if (DateTime.TryParse(startDate, out var sd)) parsedStartDate = sd;
+
+            DateTime? parsedEndDate = null;
+            if (DateTime.TryParse(endDate, out var ed)) parsedEndDate = ed;
+
+            TimeSpan? parsedStartTime = null;
+            if (TimeSpan.TryParse(startTime, out var st)) parsedStartTime = st;
+
+            TimeSpan? parsedEndTime = null;
+            if (TimeSpan.TryParse(endTime, out var et)) parsedEndTime = et;
+
             var query = _context.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
-                .Where(c => c.IsActive && _context.CourtSlots.Any(s => s.CourtId == c.Id && s.StartTime >= DateTime.Now));
+                .Where(c => c.IsActive && _context.CourtSlots.Any(s => 
+                    s.CourtId == c.Id && 
+                    s.StartTime >= DateTime.Now &&
+                    !s.IsBooked &&
+                    (!parsedStartDate.HasValue || s.StartTime.Date >= parsedStartDate.Value.Date) &&
+                    (!parsedEndDate.HasValue || s.StartTime.Date <= parsedEndDate.Value.Date) &&
+                    (!parsedStartTime.HasValue || s.StartTime.TimeOfDay >= parsedStartTime.Value) &&
+                    (!parsedEndTime.HasValue || s.StartTime.TimeOfDay <= parsedEndTime.Value) &&
+                    (!minPrice.HasValue || s.Price >= minPrice.Value) &&
+                    (!maxPrice.HasValue || s.Price <= maxPrice.Value)
+                ));
 
-            if (!string.IsNullOrEmpty(sportType))
+            if (!string.IsNullOrEmpty(sportTypes))
             {
-                query = query.Where(c => c.SportType == sportType);
+                var types = sportTypes.Split(',').Select(t => t.Trim()).ToList();
+                query = query.Where(c => types.Contains(c.SportType));
             }
 
             var dbResults = query.Select(c => new {
@@ -139,10 +161,14 @@ namespace CoreAuthAPI.Controllers
                 DistanceKm = (lat.HasValue && lng.HasValue && r.Latitude.HasValue && r.Longitude.HasValue) 
                              ? CalculateDistance(lat.Value, lng.Value, r.Latitude.Value, r.Longitude.Value) 
                              : (double?)null
-            });
+            }).AsEnumerable();
 
             if (lat.HasValue && lng.HasValue)
             {
+                if (distance.HasValue)
+                {
+                    finalResults = finalResults.Where(r => r.DistanceKm <= distance.Value);
+                }
                 finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
             }
 
