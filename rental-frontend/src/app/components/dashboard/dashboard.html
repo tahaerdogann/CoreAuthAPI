@@ -19,7 +19,7 @@
         <!-- Location Input -->
         <div style="position: relative; display: flex; align-items: center;">
           <svg style="position: absolute; left: 16px; width: 20px; height: 20px; color: #000000;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-          <input #addressInput type="text" [(ngModel)]="searchLocation" placeholder="Adres gir, veya şehir/ilçe seç (Enter'a bas)" (keyup.enter)="onSearch()" style="width: 100%; padding: 14px 14px 14px 48px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 15px; box-sizing: border-box; color: #000000; font-weight: 500; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #f8fafc; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <input #addressInput type="text" [(ngModel)]="searchLocation" placeholder="Adres gir, veya şehir/ilçe seç (Enter'a bas)" (keyup.enter)="onSearchAndScroll()" style="width: 100%; padding: 14px 14px 14px 48px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 15px; box-sizing: border-box; color: #000000; font-weight: 500; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #f8fafc; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
         </div>
 
         <div style="display: flex; justify-content: flex-start; align-items: center; margin-top: 2px;">
@@ -104,7 +104,7 @@
     </div>
 
     <!-- Main Results -->
-    <div style="flex-grow: 1; min-width: 0; width: 100%; position: relative;">
+    <div #resultsSection style="flex-grow: 1; min-width: 0; width: 100%; position: relative;">
       
       <!-- Skeleton Loading -->
       <div *ngIf="isLoading" class="skeleton-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">

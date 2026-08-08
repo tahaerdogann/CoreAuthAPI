@@ -26,6 +26,14 @@ export class CourtDetailComponent implements OnInit {
   confirmModalVisible: boolean = false;
   slotToBook: any = null;
 
+  // Yeni Eklenen State Değişkenleri
+  availableDates: string[] = [];
+  selectedDate: string = '';
+  filteredSlots: any[] = [];
+
+  lightboxVisible: boolean = false;
+  currentPhotoIndex: number = 0;
+
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
@@ -79,19 +87,19 @@ export class CourtDetailComponent implements OnInit {
     });
   }
 
-  getAmenitiesList(flags: number): {icon: string, text: string}[] {
-    const list: {icon: string, text: string}[] = [];
-    if (flags & 1) list.push({icon: '🚻', text: 'WC / Lavabo'});
-    if (flags & 2) list.push({icon: '☕', text: 'Kafe / Büfe'});
-    if (flags & 4) list.push({icon: '♿', text: 'Engelli Erişimi'});
-    if (flags & 8) list.push({icon: '👕', text: 'Soyunma Odası'});
-    if (flags & 16) list.push({icon: '📶', text: 'Ücretsiz Wi-Fi'});
-    if (flags & 32) list.push({icon: '🚿', text: 'Duş'});
-    if (flags & 64) list.push({icon: '🔒', text: 'Kilitli Dolap'});
-    if (flags & 128) list.push({icon: '🏟️', text: 'Tribün'});
-    if (flags & 256) list.push({icon: '❄️', text: 'Klima'});
-    if (flags & 512) list.push({icon: '🕌', text: 'Mescit'});
-    if (flags & 1024) list.push({icon: '💡', text: 'Gece Aydınlatması'});
+  getAmenitiesList(flags: number): { text: string }[] {
+    const list: { text: string }[] = [];
+    if (flags & 1) list.push({ text: 'WC / Lavabo' });
+    if (flags & 2) list.push({ text: 'Kafe / Büfe' });
+    if (flags & 4) list.push({ text: 'Engelli Erişimi' });
+    if (flags & 8) list.push({ text: 'Soyunma Odası' });
+    if (flags & 16) list.push({ text: 'Ücretsiz Wi-Fi' });
+    if (flags & 32) list.push({ text: 'Duş' });
+    if (flags & 64) list.push({ text: 'Kilitli Dolap' });
+    if (flags & 128) list.push({ text: 'Tribün' });
+    if (flags & 256) list.push({ text: 'Klima' });
+    if (flags & 512) list.push({ text: 'Mescit' });
+    if (flags & 1024) list.push({ text: 'Gece Aydınlatması' });
     return list;
   }
 
@@ -99,6 +107,7 @@ export class CourtDetailComponent implements OnInit {
     this.http.get(`${environment.apiUrl}/Courts/slots/${this.courtId}`).subscribe({
       next: (data: any) => {
         this.slots = data?.$values || data || [];
+        this.groupSlotsByDate();
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Seanslar yüklenemedi:', err)
@@ -179,5 +188,112 @@ export class CourtDetailComponent implements OnInit {
         this.closeConfirmModal();
       }
     });
+  }
+
+  // YENİ EKLENEN METOTLAR (Tarih Sekmeleri)
+  groupSlotsByDate() {
+    if (!this.slots || this.slots.length === 0) {
+      this.availableDates = [];
+      this.filteredSlots = [];
+      return;
+    }
+
+    const uniqueDates = new Set<string>();
+    this.slots.forEach(slot => {
+      if (slot.startTime) {
+        const dateStr = new Date(slot.startTime).toLocaleDateString('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        uniqueDates.add(dateStr);
+      }
+    });
+
+    // string array'e çevir
+    this.availableDates = Array.from(uniqueDates).sort((a, b) => {
+      const [dayA, monthA, yearA] = a.split('.');
+      const [dayB, monthB, yearB] = b.split('.');
+      return new Date(+yearA, +monthA - 1, +dayA).getTime() - new Date(+yearB, +monthB - 1, +dayB).getTime();
+    });
+
+    if (this.availableDates.length > 0) {
+      if (!this.availableDates.includes(this.selectedDate)) {
+        this.selectedDate = this.availableDates[0];
+      }
+      this.filterSlotsByDate(this.selectedDate);
+    } else {
+      this.filteredSlots = [];
+    }
+  }
+
+  filterSlotsByDate(dateStr: string) {
+    this.selectedDate = dateStr;
+    this.filteredSlots = this.slots.filter(slot => {
+      if (!slot.startTime) return false;
+      const sDate = new Date(slot.startTime).toLocaleDateString('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      return sDate === dateStr;
+    });
+  }
+
+  getDateLabel(dateStr: string): string {
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return dateStr;
+    
+    const [d, m, y] = parts;
+    const dateObj = new Date(+y, +m - 1, +d);
+    dateObj.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (dateObj.getTime() === today.getTime()) return 'Bugün';
+    if (dateObj.getTime() === tomorrow.getTime()) return 'Yarın';
+
+    // Diğer günler için kısa isimler
+    return dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+  }
+
+  // YENİ EKLENEN METOTLAR (Lightbox)
+  get photosArray(): any[] {
+    return this.court?.photos?.$values || this.court?.photos || [];
+  }
+
+  openLightbox(index: number = 0) {
+    if (this.photosArray.length > 0) {
+      this.currentPhotoIndex = index;
+      this.lightboxVisible = true;
+      document.body.style.overflow = 'hidden'; // arkayı kaydırmayı engelle
+    }
+  }
+
+  closeLightbox() {
+    this.lightboxVisible = false;
+    document.body.style.overflow = 'auto';
+  }
+
+  nextPhoto() {
+    if (this.currentPhotoIndex < this.photosArray.length - 1) {
+      this.currentPhotoIndex++;
+    } else {
+      this.currentPhotoIndex = 0; // başa dön
+    }
+  }
+
+  prevPhoto() {
+    if (this.currentPhotoIndex > 0) {
+      this.currentPhotoIndex--;
+    } else {
+      this.currentPhotoIndex = this.photosArray.length - 1; // sona git
+    }
+  }
+
+  // YENİ EKLENEN: Scroll to Section metodu
+  scrollTo(sectionId: string) {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -100; 
+      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   }
 }

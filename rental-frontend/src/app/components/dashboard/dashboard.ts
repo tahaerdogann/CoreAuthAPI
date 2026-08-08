@@ -220,6 +220,11 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.sahalarıYukle();
   }
 
+  onSearchAndScroll() {
+    this.onSearch();
+    this.scrollToResults();
+  }
+
   goToCourtDetail(id: string) {
     this.router.navigate(['/court-detail', id]);
   }
@@ -227,7 +232,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   scrollToResults() {
     if (this.resultsSection && this.resultsSection.nativeElement) {
       setTimeout(() => {
-        const y = this.resultsSection.nativeElement.getBoundingClientRect().top + window.scrollY - 120;
+        const y = this.resultsSection.nativeElement.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: 'smooth' });
       }, 100);
     }
