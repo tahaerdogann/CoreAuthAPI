@@ -6,11 +6,12 @@ import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { CourtFormComponent } from '../shared/court-form.component';
+import { FlatpickrModule } from 'angularx-flatpickr';
 
 @Component({
   selector: 'app-owner-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CourtFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CourtFormComponent, FlatpickrModule],
   templateUrl: './owner-dashboard.html',
   styleUrls: ['./owner-dashboard.css']
 })

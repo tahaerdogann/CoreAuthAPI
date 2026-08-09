@@ -1,1 +1,113 @@
 /* You can add global styles to this file, and also import other style files */
+@import 'flatpickr/dist/themes/airbnb.css';
+
+/* Flatpickr Customization to match site theme */
+.flatpickr-calendar {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+/* Fix input-group overflow when Flatpickr creates altInputs */
+.input-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.input-group input {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Make native-input global so Flatpickr's dynamically generated altInput can use it */
+.native-input {
+  width: 100%;
+  padding: 10px 12px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.native-input:focus {
+  outline: none !important;
+  border-color: #10b981 !important;
+  background-color: white !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.flatpickr-time input {
+  color: #334155 !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+}
+
+.flatpickr-calendar.noCalendar {
+  padding: 8px !important;
+}
+
+.owner-date-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  color: #334155;
+  background-color: white;
+}
+.owner-date-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.owner-date-input:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}
+
+/* Clear icon styles for Flatpickr inputs */
+.input-with-clear {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-clear .clear-icon {
+  position: absolute;
+  right: 6px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 18px;
+  font-weight: 600;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 10;
+  user-select: none;
+}
+
+.input-with-clear .clear-icon:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.input-with-clear input.native-input,
+.input-with-clear input.owner-date-input,
+.input-with-clear input.flatpickr-input {
+  padding-right: 32px !important;
+}

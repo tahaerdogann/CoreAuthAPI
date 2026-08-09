@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
@@ -6,19 +6,29 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { FlatpickrModule } from 'angularx-flatpickr';
 
 declare var google: any;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FlatpickrModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
 export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   sahaListesi: any[] = [];
   isLoading: boolean = false;
+  
+  // Pagination & Sorting state
+  page: number = 1;
+  pageSize: number = 10;
+  totalCount: number = 0;
+  sortBy: string = '';
+  isFetchingMore: boolean = false;
+  hasMoreData: boolean = true;
+  isSortDropdownOpen: boolean = false;
   
   @ViewChild('addressInput') addressInput!: ElementRef;
   @ViewChild('resultsSection') resultsSection!: ElementRef;
@@ -125,8 +135,18 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  sahalarıYukle() {
-    this.isLoading = true;
+  sahalarıYukle(isLoadMore: boolean = false) {
+    if (isLoadMore) {
+      if (this.isFetchingMore || !this.hasMoreData) return;
+      this.isFetchingMore = true;
+      this.page++;
+    } else {
+      this.isLoading = true;
+      this.page = 1;
+      this.hasMoreData = true;
+      // this.sahaListesi = []; // İsterseniz skeleton gösterirken listeyi temizleyebilirsiniz
+    }
+
     let url = `${environment.apiUrl}/Courts/search`;
     let queryParams = [];
     
@@ -138,7 +158,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
 
     const selectedSportTypes = Object.keys(this.selectedSports).filter(key => this.selectedSports[key]);
     if (selectedSportTypes.length > 0) {
-      // Backend tarafında sportTypes olarak virgülle ayrılmış bir liste beklenmesi olası, veya birden fazla sportType parametresi
       queryParams.push(`sportTypes=${encodeURIComponent(selectedSportTypes.join(','))}`);
     }
 
@@ -149,21 +168,49 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     if (this.minPrice !== null && this.minPrice !== undefined) queryParams.push(`minPrice=${this.minPrice}`);
     if (this.maxPrice !== null && this.maxPrice !== undefined) queryParams.push(`maxPrice=${this.maxPrice}`);
 
+    // Pagination & Sorting
+    queryParams.push(`page=${this.page}`);
+    queryParams.push(`pageSize=${this.pageSize}`);
+    if (this.sortBy) queryParams.push(`sortBy=${this.sortBy}`);
+
     if (queryParams.length > 0) {
       url += '?' + queryParams.join('&');
     }
 
     this.http.get(url).subscribe({
       next: (data: any) => {
-        if (data && data.$values) this.sahaListesi = data.$values;
-        else if (Array.isArray(data)) this.sahaListesi = data;
-        else this.sahaListesi = [];
-        this.isLoading = false;
+        let newItems = [];
+        
+        let itemsField = data.items || data.Items;
+        let countField = data.totalCount !== undefined ? data.totalCount : data.TotalCount;
+        
+        if (itemsField) {
+           newItems = itemsField.$values || itemsField;
+           this.totalCount = countField || 0;
+        } else if (data && data.$values) {
+           newItems = data.$values;
+        } else if (Array.isArray(data)) {
+           newItems = data;
+        }
+
+        if (newItems.length < this.pageSize) {
+           this.hasMoreData = false;
+        }
+
+        if (isLoadMore) {
+           this.sahaListesi = [...this.sahaListesi, ...newItems];
+           this.isFetchingMore = false;
+        } else {
+           this.sahaListesi = newItems;
+           this.isLoading = false;
+        }
+
         this.cdr.detectChanges(); // Change detection'ı manuel tetikle (takılmayı çözer)
       },
       error: (err: any) => {
         console.error("Sahalar yüklenirken hata:", err);
-        this.isLoading = false;
+        if (isLoadMore) this.isFetchingMore = false;
+        else this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
@@ -236,5 +283,33 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         window.scrollTo({ top: y, behavior: 'smooth' });
       }, 100);
     }
+  }
+
+  // Yükleme sırasında infinite scroll
+  @HostListener('window:scroll')
+  onScroll() {
+    if (this.isLoading || this.isFetchingMore || !this.hasMoreData) return;
+    
+    // Yüksekliğe yaklaşıldığında tetikle (bottom offset 200px)
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      this.sahalarıYukle(true);
+    }
+  }
+
+  // Sıralama Menüsü Yönetimi
+  toggleSortDropdown(event: Event) {
+    event.stopPropagation();
+    this.isSortDropdownOpen = !this.isSortDropdownOpen;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.isSortDropdownOpen = false;
+  }
+
+  selectSort(sortOption: string) {
+    this.sortBy = sortOption;
+    this.isSortDropdownOpen = false;
+    this.onSearch(); // Baştan yükle
   }
 }

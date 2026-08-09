@@ -81,16 +81,28 @@
       <div class="filter-section">
         <h4 class="filter-title">Tarih Aralığı</h4>
         <div class="input-group">
-          <input type="date" [(ngModel)]="startDate" (ngModelChange)="onDebouncedFilterChange()" class="native-input">
-          <input type="date" [(ngModel)]="endDate" (ngModelChange)="onDebouncedFilterChange()" class="native-input">
+          <div class="input-with-clear">
+            <input type="text" mwlFlatpickr [altInput]="true" [altInputClass]="'native-input'" [convertModelValue]="true" altFormat="d.m.Y" [(ngModel)]="startDate" (ngModelChange)="onDebouncedFilterChange()" class="native-input" placeholder="Başlangıç Tarihi">
+            <span class="clear-icon" *ngIf="startDate" (click)="startDate = ''; onDebouncedFilterChange()" title="Temizle">&times;</span>
+          </div>
+          <div class="input-with-clear">
+            <input type="text" mwlFlatpickr [altInput]="true" [altInputClass]="'native-input'" [convertModelValue]="true" altFormat="d.m.Y" [(ngModel)]="endDate" (ngModelChange)="onDebouncedFilterChange()" class="native-input" placeholder="Bitiş Tarihi">
+            <span class="clear-icon" *ngIf="endDate" (click)="endDate = ''; onDebouncedFilterChange()" title="Temizle">&times;</span>
+          </div>
         </div>
       </div>
 
       <div class="filter-section">
         <h4 class="filter-title">Saat Aralığı</h4>
         <div class="input-group">
-          <input type="time" [(ngModel)]="startTime" (ngModelChange)="onDebouncedFilterChange()" class="native-input">
-          <input type="time" [(ngModel)]="endTime" (ngModelChange)="onDebouncedFilterChange()" class="native-input">
+          <div class="input-with-clear">
+            <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="startTime" (ngModelChange)="onDebouncedFilterChange()" class="native-input" placeholder="Başlangıç">
+            <span class="clear-icon" *ngIf="startTime" (click)="startTime = ''; onDebouncedFilterChange()" title="Temizle">&times;</span>
+          </div>
+          <div class="input-with-clear">
+            <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="endTime" (ngModelChange)="onDebouncedFilterChange()" class="native-input" placeholder="Bitiş">
+            <span class="clear-icon" *ngIf="endTime" (click)="endTime = ''; onDebouncedFilterChange()" title="Temizle">&times;</span>
+          </div>
         </div>
       </div>
 
@@ -121,7 +133,34 @@
       <div *ngIf="!isLoading">
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
           <h2 style="color: #1e293b; margin: 0; font-size: 28px; font-weight: 700;">Müsait Tesisler</h2>
-          <span *ngIf="sahaListesi.length > 0" style="color: #64748b; font-weight: 500;">{{ sahaListesi.length }} tesis bulundu</span>
+          
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <span *ngIf="totalCount > 0" style="color: #64748b; font-weight: 500;">{{ totalCount }} tesis bulundu</span>
+            
+            <!-- Custom Sort Dropdown -->
+            <div class="sort-dropdown" [class.open]="isSortDropdownOpen">
+              <button class="sort-dropdown-btn" (click)="toggleSortDropdown($event)">
+                <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
+                Sırala
+                <svg style="width: 16px; height: 16px; transition: transform 0.2s;" [style.transform]="isSortDropdownOpen ? 'rotate(180deg)' : 'rotate(0)'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              
+              <div class="sort-dropdown-content" (click)="$event.stopPropagation()">
+                <div class="sort-section-title">Fiyat</div>
+                <div class="sort-option" [class.active]="sortBy === 'price_asc'" (click)="selectSort('price_asc')">
+                  Artan Fiyat
+                </div>
+                <div class="sort-option" [class.active]="sortBy === 'price_desc'" (click)="selectSort('price_desc')">
+                  Azalan Fiyat
+                </div>
+                
+                <div class="sort-section-title">Mesafe</div>
+                <div class="sort-option" [class.active]="sortBy === 'distance_asc'" (click)="selectSort('distance_asc')">
+                  Yakından Uzağa
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div *ngIf="sahaListesi.length === 0" style="text-align: center; padding: 60px 40px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
@@ -186,6 +225,13 @@
               </div>
             </div>
         </div>
+        
+        <!-- Infinite Scroll Loader -->
+        <div *ngIf="isFetchingMore" class="infinite-scroll-loader">
+          <svg style="width: 24px; height: 24px; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Daha fazla yükleniyor...
+        </div>
+
       </div>
     </div>
   </div>

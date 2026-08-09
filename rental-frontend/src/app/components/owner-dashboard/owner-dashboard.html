@@ -46,11 +46,17 @@
             <div style="display: flex; gap: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Başlangıç Tarihi</label>
-                <input type="date" formControlName="startDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <div class="input-with-clear">
+                  <input type="text" mwlFlatpickr [altInput]="true" [altInputClass]="'owner-date-input'" [convertModelValue]="true" altFormat="d.m.Y" formControlName="startDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;" placeholder="Seçiniz">
+                  <span class="clear-icon" *ngIf="scheduleForm.get('startDate')?.value" (click)="scheduleForm.get('startDate')?.setValue(null)" title="Temizle">&times;</span>
+                </div>
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Bitiş Tarihi</label>
-                <input type="date" formControlName="endDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <div class="input-with-clear">
+                  <input type="text" mwlFlatpickr [altInput]="true" [altInputClass]="'owner-date-input'" [convertModelValue]="true" altFormat="d.m.Y" formControlName="endDate" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;" placeholder="Seçiniz">
+                  <span class="clear-icon" *ngIf="scheduleForm.get('endDate')?.value" (click)="scheduleForm.get('endDate')?.setValue(null)" title="Temizle">&times;</span>
+                </div>
               </div>
             </div>
             
@@ -74,11 +80,17 @@
                   </label>
                 </div>
                 <div style="flex: 1;" *ngIf="day.isActive">
-                  <input type="time" [(ngModel)]="day.openTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <div class="input-with-clear">
+                    <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="day.openTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="Başlangıç">
+                    <span class="clear-icon" *ngIf="day.openTime" (click)="day.openTime = ''" title="Temizle">&times;</span>
+                  </div>
                 </div>
                 <div style="flex: 0 0 20px; text-align: center; color: #94a3b8;" *ngIf="day.isActive">-</div>
                 <div style="flex: 1;" *ngIf="day.isActive">
-                  <input type="time" [(ngModel)]="day.closeTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <div class="input-with-clear">
+                    <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="day.closeTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="Bitiş">
+                    <span class="clear-icon" *ngIf="day.closeTime" (click)="day.closeTime = ''" title="Temizle">&times;</span>
+                  </div>
                 </div>
                 <div style="flex: 2; text-align: center; color: #ef4444; font-size: 13px; font-weight: 700;" *ngIf="!day.isActive">
                   Kapalı
@@ -116,11 +128,17 @@
             <div style="display: flex; gap: 20px;">
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Prime-Time Başlangıç</label>
-                <input type="time" formControlName="primeTimeStart" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <div class="input-with-clear">
+                  <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" formControlName="primeTimeStart" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;" placeholder="Başlangıç">
+                  <span class="clear-icon" *ngIf="scheduleForm.get('primeTimeStart')?.value" (click)="scheduleForm.get('primeTimeStart')?.setValue(null)" title="Temizle">&times;</span>
+                </div>
               </div>
               <div style="flex: 1;">
                 <label style="font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Prime-Time Bitiş</label>
-                <input type="time" formControlName="primeTimeEnd" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                <div class="input-with-clear">
+                  <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" formControlName="primeTimeEnd" [attr.disabled]="hasEmptySlots ? true : null" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;" placeholder="Bitiş">
+                  <span class="clear-icon" *ngIf="scheduleForm.get('primeTimeEnd')?.value" (click)="scheduleForm.get('primeTimeEnd')?.setValue(null)" title="Temizle">&times;</span>
+                </div>
               </div>
             </div>
           </div>

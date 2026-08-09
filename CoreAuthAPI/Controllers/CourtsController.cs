@@ -84,7 +84,7 @@ namespace CoreAuthAPI.Controllers
 
         [HttpGet("search")]
         [AllowAnonymous]
-        public IActionResult Search([FromQuery] double? lat, [FromQuery] double? lng, [FromQuery] string? sportTypes, [FromQuery] double? distance, [FromQuery] string? startDate, [FromQuery] string? endDate, [FromQuery] string? startTime, [FromQuery] string? endTime, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice)
+        public IActionResult Search([FromQuery] double? lat, [FromQuery] double? lng, [FromQuery] string? sportTypes, [FromQuery] double? distance, [FromQuery] string? startDate, [FromQuery] string? endDate, [FromQuery] string? startTime, [FromQuery] string? endTime, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sortBy = null)
         {
             DateTime? parsedStartDate = null;
             if (DateTime.TryParse(startDate, out var sd)) parsedStartDate = sd;
@@ -169,10 +169,40 @@ namespace CoreAuthAPI.Controllers
                 {
                     finalResults = finalResults.Where(r => r.DistanceKm <= distance.Value);
                 }
-                finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
             }
 
-            return Ok(finalResults.ToList());
+            // Sorting logic
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "price_asc":
+                        finalResults = finalResults.OrderBy(r => r.HourlyPrice);
+                        break;
+                    case "price_desc":
+                        finalResults = finalResults.OrderByDescending(r => r.HourlyPrice);
+                        break;
+                    case "distance_asc":
+                        finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
+                        break;
+                    default:
+                        if (lat.HasValue && lng.HasValue)
+                            finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
+                        break;
+                }
+            }
+            else
+            {
+                if (lat.HasValue && lng.HasValue)
+                {
+                    finalResults = finalResults.OrderBy(r => r.DistanceKm ?? double.MaxValue);
+                }
+            }
+
+            var totalCount = finalResults.Count();
+            var pagedResults = finalResults.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            return Ok(new { TotalCount = totalCount, Items = pagedResults });
         }
 
         private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
