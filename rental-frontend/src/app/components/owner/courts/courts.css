@@ -1,8 +1,6 @@
 .courts-container {
-  background: var(--card-bg, #fff);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
+  background: transparent;
+  padding: 1rem 0;
 }
 
 .header-section {
@@ -56,16 +54,23 @@
 }
 
 .court-card {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   overflow: hidden;
   background: white;
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .court-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.court-img-link, .court-info-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .court-img {

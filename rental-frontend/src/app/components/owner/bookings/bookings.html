@@ -1,12 +1,24 @@
 <div class="bookings-container">
   <div class="header-section">
     <h2>Rezervasyonlar ve Kapalı Seanslar</h2>
-    <div class="filter-group">
-      <label>Saha Filtrele:</label>
-      <select [(ngModel)]="selectedCourtId" (change)="onFilterChange()" class="form-control">
-        <option value="">Tüm Sahalarım</option>
-        <option *ngFor="let court of myCourts" [value]="court.id || court.Id">{{ court.name || court.Name }}</option>
-      </select>
+    <div class="header-actions">
+      <div class="auto-approve-toggle" *ngIf="selectedCourtId && selectedCourt">
+        <label class="switch-wrapper">
+          <span>Otomatik Onay (Anında Booking): </span>
+          <label class="switch">
+            <input type="checkbox" [checked]="selectedCourt.isAutoApproveEnabled" (change)="toggleAutoApprove()">
+            <span class="slider round"></span>
+          </label>
+        </label>
+      </div>
+
+      <div class="filter-group">
+        <label>Saha Filtrele:</label>
+        <select [(ngModel)]="selectedCourtId" (change)="onFilterChange()" class="form-control">
+          <option value="">Tüm Sahalarım</option>
+          <option *ngFor="let court of myCourts" [value]="court.id || court.Id">{{ court.name || court.Name }}</option>
+        </select>
+      </div>
     </div>
   </div>
 

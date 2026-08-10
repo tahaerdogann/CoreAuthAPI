@@ -23,6 +23,7 @@ namespace Rental.Entities.Entity
 
         public bool IsActive { get; set; } = true;
         public bool IsPublished { get; set; } = false; // Müşterilere görünüp görünmeme durumu
+        public bool IsAutoApproveEnabled { get; set; } = false; // Anında Onay
         public Guid OwnerId { get; set; }
 
         public ICollection<CourtPhoto> Photos { get; set; } = new List<CourtPhoto>();

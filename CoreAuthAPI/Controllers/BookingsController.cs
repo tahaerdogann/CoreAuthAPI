@@ -33,17 +33,22 @@ namespace CoreAuthAPI.Controllers
             if (slot.IsBooked)
                 return BadRequest("Bu seans zaten kiralanmış.");
 
+            var court = _context.Courts.FirstOrDefault(c => c.Id == slot.CourtId);
+            var isAutoApprove = court?.IsAutoApproveEnabled ?? false;
+
             // Kiralama işlemini kaydet
             var booking = new Booking
             {
                 CourtSlotId = slot.Id,
                 CustomerId = userId,
-                Status = Rental.Entities.Enum.BookingStatus.Approved,
+                Status = isAutoApprove ? Rental.Entities.Enum.BookingStatus.Approved : Rental.Entities.Enum.BookingStatus.Pending,
                 RecordDate = DateTime.Now,
                 RecordUserCode = userId
             };
 
-            // Slotu güncelle
+            // Eğer onaylandıysa slotu da rezerve et, beklemedeyse başkası alabilir veya sadece slot isBooked işaretlenip pending durabilir.
+            // İş mantığı gereği, beklemede olsa bile başkası alamasın diye IsBooked yapıyoruz. 
+            // Sahibin reddetme ihtimaline karşı.
             slot.IsBooked = true;
             slot.RenterId = userId;
 

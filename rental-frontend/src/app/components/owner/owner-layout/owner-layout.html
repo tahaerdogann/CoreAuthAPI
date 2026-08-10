@@ -2,7 +2,7 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h2>Owner Panel</h2>
+      <!-- Removed Owner Panel title as requested -->
     </div>
     <nav class="sidebar-nav">
       <a routerLink="/owner/dashboard" routerLinkActive="active" class="nav-item">
@@ -27,17 +27,12 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Top Navbar -->
+    <!-- Top Navbar (Only for mobile toggle if needed) -->
     <header class="top-navbar">
       <div class="nav-left">
         <button class="menu-toggle" (click)="toggleSidebar()">
           <i class="fas fa-bars"></i>
         </button>
-        <h3>Yönetim Paneli</h3>
-      </div>
-      <div class="nav-right">
-        <span class="user-name">Hoş Geldiniz</span>
-        <button class="logout-btn" (click)="logout()">Çıkış Yap</button>
       </div>
     </header>
 

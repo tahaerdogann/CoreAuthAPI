@@ -68,6 +68,29 @@ export class BookingsComponent implements OnInit {
     this.loadBookedSlots();
   }
 
+  get selectedCourt() {
+    return this.myCourts.find((c: any) => (c.id || c.Id) === this.selectedCourtId);
+  }
+
+  toggleAutoApprove() {
+    if (!this.selectedCourtId) return;
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    this.http.post(`${environment.apiUrl}/Courts/${this.selectedCourtId}/toggle-auto-approve`, {}, { headers }).subscribe({
+      next: (res: any) => {
+        if(this.selectedCourt) {
+            this.selectedCourt.isAutoApproveEnabled = res.isAutoApproveEnabled;
+        }
+        alert(res.message);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+        alert(err.error?.message || 'Hata oluştu');
+      }
+    });
+  }
+
   updateStatus(bookingId: string, newStatus: number) {
     if (!bookingId) return;
     

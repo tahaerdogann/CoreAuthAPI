@@ -2,27 +2,23 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--bg-color);
+  background: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .sidebar {
-  width: 250px;
-  background: var(--card-bg);
-  border-right: 1px solid var(--border-color);
+  width: 260px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+  z-index: 10;
 }
 
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  color: var(--primary-color);
-  font-size: 1.25rem;
 }
 
 .sidebar-nav {
@@ -35,26 +31,33 @@
   display: flex;
   align-items: center;
   padding: 1rem 1.5rem;
-  color: var(--text-color);
+  color: #64748b;
   text-decoration: none;
   transition: all 0.2s ease;
   gap: 1rem;
+  font-weight: 500;
+  margin: 4px 16px;
+  border-radius: 12px;
 }
 
 .nav-item:hover, .nav-item.active {
-  background: rgba(43, 217, 101, 0.1);
-  color: var(--primary-color);
-  border-right: 3px solid var(--primary-color);
+  background: #f1f5f9;
+  color: #10b981;
+}
+
+.nav-item.active {
+  background: #ecfdf5;
 }
 
 .nav-item i {
   width: 20px;
   text-align: center;
+  font-size: 1.1rem;
 }
 
 .sidebar-footer {
   padding: 1rem 0;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #e2e8f0;
 }
 
 .main-content {
@@ -65,54 +68,30 @@
 }
 
 .top-navbar {
-  height: 70px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem;
+  display: none; /* Desktop'ta gizli, sadece mobilde gösterilecek */
 }
 
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+@media (max-width: 768px) {
+  .top-navbar {
+    display: flex;
+    height: 60px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+    padding: 0 1rem;
+  }
 }
 
 .menu-toggle {
   background: none;
   border: none;
-  color: var(--text-color);
+  color: #0f172a;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
 }
 
-.nav-left h3 {
-  margin: 0;
-  font-size: 1.1rem;
-}
 
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.logout-btn {
-  background: var(--danger-color, #ef4444);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.logout-btn:hover {
-  opacity: 0.9;
-}
 
 .content-wrapper {
   flex: 1;

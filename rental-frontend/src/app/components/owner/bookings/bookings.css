@@ -1,8 +1,6 @@
 .bookings-container {
-  background: var(--card-bg, #fff);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
+  background: transparent;
+  padding: 1rem 0;
 }
 
 .header-section {
@@ -17,6 +15,77 @@
   color: var(--text-color);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.auto-approve-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #10b981;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
 .filter-group {
   display: flex;
   align-items: center;
@@ -24,10 +93,22 @@
 }
 
 .filter-group select {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 0.5rem 1.5rem 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   outline: none;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  min-width: 200px;
+}
+
+.table-responsive {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  padding: 1rem;
 }
 
 .table-responsive {
@@ -40,15 +121,16 @@
 }
 
 .table th, .table td {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .table th {
   font-weight: 600;
-  color: var(--text-muted);
-  background: rgba(0, 0, 0, 0.02);
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .badge {

@@ -17,19 +17,23 @@
 
   <div class="courts-grid" *ngIf="!isLoading && courts.length > 0">
     <div class="court-card" *ngFor="let court of courts">
-      <!-- Resim -->
-      <div class="court-img">
-        <img [src]="(court.photos && court.photos.length > 0) ? (court.photos[0].url || court.photos[0]) : 'assets/placeholder-court.jpg'" alt="{{court.name}}">
-        <div class="status-badge" [ngClass]="court.isPublished ? 'published' : 'draft'">
-          {{ court.isPublished ? 'Yayında' : 'Taslak' }}
+      <!-- Resim (Clickable) -->
+      <a [routerLink]="['/court', court.id || court.Id]" class="court-img-link">
+        <div class="court-img">
+          <img [src]="(court.photos && court.photos.length > 0) ? (court.photos[0].url || court.photos[0]) : 'assets/placeholder-court.jpg'" alt="{{court.name}}">
+          <div class="status-badge" [ngClass]="court.isPublished ? 'published' : 'draft'">
+            {{ court.isPublished ? 'Yayında' : 'Taslak' }}
+          </div>
         </div>
-      </div>
+      </a>
       
-      <div class="court-info">
-        <h3>{{ court.name }}</h3>
-        <p class="sport-type"><i class="fas fa-futbol"></i> {{ court.sportType }}</p>
-        <p class="location"><i class="fas fa-map-marker-alt"></i> {{ court.district }}, {{ court.city }}</p>
-      </div>
+      <a [routerLink]="['/court', court.id || court.Id]" class="court-info-link">
+        <div class="court-info">
+          <h3>{{ court.name }}</h3>
+          <p class="sport-type"><i class="fas fa-futbol"></i> {{ court.sportType }}</p>
+          <p class="location"><i class="fas fa-map-marker-alt"></i> {{ court.district }}, {{ court.city }}</p>
+        </div>
+      </a>
 
       <div class="court-actions">
         <!-- Yayın Durumu Değiştir -->

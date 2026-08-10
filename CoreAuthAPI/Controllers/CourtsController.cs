@@ -453,6 +453,24 @@ namespace CoreAuthAPI.Controllers
             return Ok(new { message = "Sahanın yayın durumu güncellendi.", isPublished = court.IsPublished });
         }
 
+        [HttpPost("{courtId:guid}/toggle-auto-approve")]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult ToggleAutoApprove(Guid courtId)
+        {
+            var court = _context.Courts.FirstOrDefault(c => c.Id == courtId);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (court == null) return NotFound("Saha bulunamadı.");
+            if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
+                return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
+
+            court.IsAutoApproveEnabled = !court.IsAutoApproveEnabled;
+            _context.SaveChanges();
+
+            return Ok(new { message = "Otomatik onay durumu güncellendi.", isAutoApproveEnabled = court.IsAutoApproveEnabled });
+        }
+
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "Admin,Owner")]
         public IActionResult DeleteCourt(Guid id)

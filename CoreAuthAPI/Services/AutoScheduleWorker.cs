@@ -37,8 +37,16 @@ namespace CoreAuthAPI.Services
                     await ExtendSchedulesAsync();
                 }
 
-                // Her 1 dakikada bir saati kontrol et
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                try
+                {
+                    // Her 1 dakikada bir saati kontrol et
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Uygulama kapanırken token iptal edildiğinde buraya düşer, güvenlice çıkış yap.
+                    break;
+                }
             }
         }
 

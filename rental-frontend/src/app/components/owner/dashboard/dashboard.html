@@ -38,21 +38,29 @@
     </div>
   </div>
 
-  <div class="quick-actions" *ngIf="!isLoading">
-    <h3>Hızlı İşlemler</h3>
-    <div class="actions-grid">
-      <a routerLink="/owner/courts" class="action-card">
-        <i class="fas fa-plus-circle"></i>
-        <span>Saha Yönetimi</span>
-      </a>
-      <a routerLink="/owner/schedule" class="action-card">
-        <i class="fas fa-calendar-alt"></i>
-        <span>Takvim Oluştur</span>
-      </a>
-      <a routerLink="/owner/bookings" class="action-card">
-        <i class="fas fa-list"></i>
-        <span>Rezervasyonları Gör</span>
-      </a>
+  <div class="chart-container" *ngIf="!isLoading">
+    <div class="chart-header">
+      <h3>Gelir Analizi</h3>
+      <div class="chart-filters">
+        <button (click)="changeTimeframe('week')" [class.active]="timeframe === 'week'">Son 1 Hafta</button>
+        <button (click)="changeTimeframe('month')" [class.active]="timeframe === 'month'">Son 1 Ay</button>
+        <button (click)="changeTimeframe('year')" [class.active]="timeframe === 'year'">Son 1 Yıl</button>
+      </div>
+    </div>
+    
+    <div class="chart-body">
+      <apx-chart
+        *ngIf="chartOptions"
+        [series]="chartOptions.series"
+        [chart]="chartOptions.chart"
+        [xaxis]="chartOptions.xaxis"
+        [dataLabels]="chartOptions.dataLabels"
+        [stroke]="chartOptions.stroke"
+        [title]="chartOptions.title"
+        [tooltip]="chartOptions.tooltip"
+        [colors]="chartOptions.colors"
+        [fill]="chartOptions.fill"
+      ></apx-chart>
     </div>
   </div>
 </div>

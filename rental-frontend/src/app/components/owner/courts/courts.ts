@@ -4,10 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { CourtFormComponent } from '../../shared/court-form.component';
 
+import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-courts',
   standalone: true,
-  imports: [CommonModule, CourtFormComponent],
+  imports: [CommonModule, CourtFormComponent, RouterModule],
   templateUrl: './courts.html',
   styleUrls: ['./courts.css']
 })
