@@ -12,6 +12,38 @@
   margin: 0 auto;
 }
 
+/* Preview Banner */
+.preview-banner {
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #b45309;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.preview-banner svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+/* Disabled Actions */
+.fav-btn:disabled, .fav-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.disabled-btn {
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+}
+
 /* Hero Section (Airbnb Style) */
 .hero-gallery {
   position: relative;

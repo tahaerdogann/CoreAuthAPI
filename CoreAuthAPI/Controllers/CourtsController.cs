@@ -53,6 +53,7 @@ namespace CoreAuthAPI.Controllers
                 Longitude = request.Longitude,
                 OwnerId = userId,
                 IsActive = true,
+                IsPublished = request.IsPublished,
                 Photos = request.Photos?.Select(p => new CourtPhoto 
                 {
                     Url = p.Url,
@@ -100,7 +101,7 @@ namespace CoreAuthAPI.Controllers
 
             var query = _context.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
-                .Where(c => c.IsActive && _context.CourtSlots.Any(s => 
+                .Where(c => c.IsActive && c.IsPublished && _context.CourtSlots.Any(s => 
                     s.CourtId == c.Id && 
                     s.StartTime >= DateTime.Now &&
                     !s.IsBooked &&
@@ -137,6 +138,7 @@ namespace CoreAuthAPI.Controllers
                 c.Longitude,
                 c.OwnerId,
                 c.IsActive,
+                c.IsPublished,
                 Photos = c.Photos.OrderBy(p => p.DisplayOrder).Select(p => p.Url).ToList()
             }).ToList();
 
@@ -157,6 +159,7 @@ namespace CoreAuthAPI.Controllers
                 r.Longitude,
                 r.OwnerId,
                 r.IsActive,
+                r.IsPublished,
                 r.Photos,
                 DistanceKm = (lat.HasValue && lng.HasValue && r.Latitude.HasValue && r.Longitude.HasValue) 
                              ? CalculateDistance(lat.Value, lng.Value, r.Latitude.Value, r.Longitude.Value) 
@@ -233,8 +236,15 @@ namespace CoreAuthAPI.Controllers
             if (court == null)
                 return NotFound(new { message = "Saha bulunamadı." });
 
-            if (!court.IsActive)
-                return BadRequest(new { message = "Bu saha sistemden kaldırılmıştır ve artık kiralanamaz." });
+            if (!court.IsActive || !court.IsPublished)
+            {
+                // Sahibiyse görmesine izin ver
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (court.OwnerId.ToString() != userIdStr)
+                {
+                    return BadRequest(new { message = "Bu saha sistemden kaldırılmış veya henüz yayında değil." });
+                }
+            }
 
             return Ok(court);
         }
@@ -425,6 +435,24 @@ namespace CoreAuthAPI.Controllers
             return Ok(new { message = "Otomatik uzatma durumu güncellendi.", isAutoScheduleEnabled = latestSchedule.IsAutoScheduleEnabled });
         }
 
+        [HttpPost("{courtId:guid}/toggle-publish")]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult TogglePublish(Guid courtId)
+        {
+            var court = _context.Courts.FirstOrDefault(c => c.Id == courtId);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (court == null) return NotFound("Saha bulunamadı.");
+            if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
+                return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
+
+            court.IsPublished = !court.IsPublished;
+            _context.SaveChanges();
+
+            return Ok(new { message = "Sahanın yayın durumu güncellendi.", isPublished = court.IsPublished });
+        }
+
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "Admin,Owner")]
         public IActionResult DeleteCourt(Guid id)
@@ -491,6 +519,7 @@ namespace CoreAuthAPI.Controllers
             court.RentalOptionsJson = request.RentalOptionsJson ?? "{}";
             court.Latitude = request.Latitude;
             court.Longitude = request.Longitude;
+            court.IsPublished = request.IsPublished;
 
             if (request.Photos != null && request.Photos.Any())
             {

@@ -1,0 +1,49 @@
+<div class="owner-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Owner Panel</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a routerLink="/owner/dashboard" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-chart-line"></i> Özet
+      </a>
+      <a routerLink="/owner/courts" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-futbol"></i> Sahalarım
+      </a>
+      <a routerLink="/owner/schedule" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-calendar-alt"></i> Takvim
+      </a>
+      <a routerLink="/owner/bookings" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-list-alt"></i> Rezervasyonlar
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a routerLink="/" class="nav-item">
+        <i class="fas fa-home"></i> Siteye Dön
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+      <div class="nav-left">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h3>Yönetim Paneli</h3>
+      </div>
+      <div class="nav-right">
+        <span class="user-name">Hoş Geldiniz</span>
+        <button class="logout-btn" (click)="logout()">Çıkış Yap</button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

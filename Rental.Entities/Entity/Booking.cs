@@ -10,6 +10,6 @@ namespace Rental.Entities.Entity
         public Guid CustomerId { get; set; }
         public User Customer { get; set; } = null!; // Kiralayan müşteri kim?
 
-        public bool IsCancelled { get; set; } = false; // Owner iptal ederse burası True olacak
+        public Rental.Entities.Enum.BookingStatus Status { get; set; } = Rental.Entities.Enum.BookingStatus.Pending; // Rezervasyon durumu
     }
 }

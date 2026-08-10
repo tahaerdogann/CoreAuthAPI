@@ -86,8 +86,20 @@ export const routes: Routes = [
   },
 
   // 4. VIP SAYFALAR (Patronlara Özel)
-  { path: 'owner-dashboard', component: OwnerDashboardComponent, canActivate: [ownerGuard] },
-  { path: 'saha-ekle', component: SahaEkleComponent, canActivate: [ownerGuard] }, // JOKER'DEN HEMEN YUKARIDA OLMALI!
+  {
+    path: 'owner',
+    loadComponent: () => import('./components/owner/owner-layout/owner-layout').then(m => m.OwnerLayoutComponent),
+    canActivate: [ownerGuard],
+    children: [
+      { path: 'dashboard', loadComponent: () => import('./components/owner/dashboard/dashboard').then(m => m.DashboardComponent) },
+      { path: 'courts', loadComponent: () => import('./components/owner/courts/courts').then(m => m.CourtsComponent) },
+      { path: 'schedule', loadComponent: () => import('./components/owner/schedule/schedule').then(m => m.ScheduleComponent) },
+      { path: 'bookings', loadComponent: () => import('./components/owner/bookings/bookings').then(m => m.BookingsComponent) },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
+  },
+  { path: 'owner-dashboard', redirectTo: 'owner/dashboard' }, // Eskiyi yönlendir
+  { path: 'saha-ekle', redirectTo: 'owner/courts' }, // Eskiyi yönlendir
 
   // 5. JOKER ROTALAR (Kesinlikle en altta olmalı!)
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

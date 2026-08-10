@@ -1,0 +1,74 @@
+<div class="courts-container">
+  <div class="header-section">
+    <h2>Sahalarım</h2>
+    <a routerLink="/saha-ekle" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Yeni Saha Ekle
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    Yükleniyor...
+  </div>
+
+  <div *ngIf="!isLoading && courts.length === 0" class="empty-state">
+    <i class="fas fa-futbol"></i>
+    <p>Henüz eklenmiş bir sahanız bulunmuyor.</p>
+  </div>
+
+  <div class="courts-grid" *ngIf="!isLoading && courts.length > 0">
+    <div class="court-card" *ngFor="let court of courts">
+      <!-- Resim -->
+      <div class="court-img">
+        <img [src]="(court.photos && court.photos.length > 0) ? (court.photos[0].url || court.photos[0]) : 'assets/placeholder-court.jpg'" alt="{{court.name}}">
+        <div class="status-badge" [ngClass]="court.isPublished ? 'published' : 'draft'">
+          {{ court.isPublished ? 'Yayında' : 'Taslak' }}
+        </div>
+      </div>
+      
+      <div class="court-info">
+        <h3>{{ court.name }}</h3>
+        <p class="sport-type"><i class="fas fa-futbol"></i> {{ court.sportType }}</p>
+        <p class="location"><i class="fas fa-map-marker-alt"></i> {{ court.district }}, {{ court.city }}</p>
+      </div>
+
+      <div class="court-actions">
+        <!-- Yayın Durumu Değiştir -->
+        <button class="btn btn-outline" (click)="togglePublish(court)" [title]="court.isPublished ? 'Yayından Kaldır' : 'Yayına Al'">
+          <i class="fas" [ngClass]="court.isPublished ? 'fa-eye-slash' : 'fa-eye'"></i>
+          {{ court.isPublished ? 'Gizle' : 'Yayınla' }}
+        </button>
+
+        <!-- Düzenle -->
+        <button class="btn btn-outline" (click)="openEditModal(court)">
+          <i class="fas fa-edit"></i> Düzenle
+        </button>
+
+        <!-- Sil -->
+        <button class="btn btn-danger" (click)="deleteCourt(court.id || court.Id)">
+          <i class="fas fa-trash"></i> Sil
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT COURT FULL SCREEN MODAL -->
+  <div *ngIf="isEditModalOpen" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Sahayı Düzenle</h2>
+        <button (click)="closeEditModal()" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <app-court-form
+          *ngIf="selectedCourtData"
+          [initialData]="selectedCourtData"
+          [isSubmitting]="isUpdatingCourt"
+          [showCancel]="true"
+          submitLabel="Değişiklikleri Güncelle"
+          (formSubmit)="onEditCourtSubmit($event)"
+          (formCancel)="closeEditModal()">
+        </app-court-form>
+      </div>
+    </div>
+  </div>
+</div>

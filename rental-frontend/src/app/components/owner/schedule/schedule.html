@@ -1,0 +1,159 @@
+<div class="schedule-container">
+  <div class="content">
+
+    <!-- SOL TARAF: KURAL MOTORU -->
+    <div class="left-panel">
+      <h3>Takvim ve Kural Motoru</h3>
+
+      <!-- Saha Seçimi -->
+      <div class="form-group">
+        <label>İşlem Yapılacak Saha:</label>
+        <select (change)="onCourtSelected($event)" class="form-control">
+          <option value="">-- Lütfen Sahanızı Seçin --</option>
+          <option *ngFor="let court of myCourts" [value]="court.id || court.Id">
+            {{ court.name || court.Name }} ({{ court.sportType || court.SportType }})
+          </option>
+        </select>
+      </div>
+
+      <!-- KURAL FORMU -->
+      <div *ngIf="selectedCourtId; else selectWarning" class="form-card">
+        <h4>Otomatik Takvim Oluşturucu</h4>
+
+        <div *ngIf="hasEmptySlots" class="alert-warning">
+          Bu sahanın halihazırda müsait seansları bulunuyor. Yeniden üretim yapmadan önce mevcut takvimi iptal etmeniz gerekir.
+        </div>
+
+        <form [formGroup]="scheduleForm" (ngSubmit)="generateSchedule()">
+          <!-- Bölüm 1: Tarih Aralığı -->
+          <div class="form-section">
+            <h5>1. Tarih Aralığı</h5>
+            <div class="form-row">
+              <div class="col">
+                <label>Başlangıç Tarihi</label>
+                <input type="text" mwlFlatpickr [altInput]="true" [convertModelValue]="true" altFormat="d.m.Y" formControlName="startDate" [attr.disabled]="hasEmptySlots ? true : null" class="form-control" placeholder="Seçiniz">
+              </div>
+              <div class="col">
+                <label>Bitiş Tarihi</label>
+                <input type="text" mwlFlatpickr [altInput]="true" [convertModelValue]="true" altFormat="d.m.Y" formControlName="endDate" [attr.disabled]="hasEmptySlots ? true : null" class="form-control" placeholder="Seçiniz">
+              </div>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" [(ngModel)]="isAutoScheduleEnabled" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" id="autoSchedule">
+              <label for="autoSchedule">🔄 Otomatik Uzatma (her yeni gün bitiş tarihine otomatik 1 gün eklenir)</label>
+            </div>
+          </div>
+
+          <!-- Bölüm 2: Saatler ve Süreler -->
+          <div class="form-section">
+            <h5>2. Çalışma Saatleri ve Süreler</h5>
+            <div class="days-list">
+              <div *ngFor="let day of daysConfig" class="day-row">
+                <div class="day-name">
+                  <label>
+                    <input type="checkbox" [(ngModel)]="day.isActive" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots">
+                    {{ day.name }}
+                  </label>
+                </div>
+                <div class="day-time" *ngIf="day.isActive">
+                  <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="day.openTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" class="form-control">
+                  <span>-</span>
+                  <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" [(ngModel)]="day.closeTime" [ngModelOptions]="{standalone: true}" [disabled]="hasEmptySlots" class="form-control">
+                </div>
+                <div class="day-closed" *ngIf="!day.isActive">Kapalı</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="col">
+                <label>Seans Süresi (Dakika)</label>
+                <input type="number" formControlName="sessionDurationMinutes" [attr.disabled]="hasEmptySlots ? true : null" class="form-control">
+              </div>
+              <div class="col">
+                <label>Tampon Boşluk (Dakika)</label>
+                <input type="number" formControlName="bufferDurationMinutes" [attr.disabled]="hasEmptySlots ? true : null" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- Bölüm 3: Fiyatlandırma -->
+          <div class="form-section">
+            <h5>3. Dinamik Fiyatlandırma (Prime-Time)</h5>
+            <div class="form-row">
+              <div class="col">
+                <label>Gündüz/Normal Fiyat (₺)</label>
+                <input type="number" formControlName="basePrice" [attr.disabled]="hasEmptySlots ? true : null" class="form-control">
+              </div>
+              <div class="col">
+                <label class="text-orange">Altın Saatler Fiyatı (₺)</label>
+                <input type="number" formControlName="primeTimePrice" [attr.disabled]="hasEmptySlots ? true : null" class="form-control prime-input">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="col">
+                <label>Prime-Time Başlangıç</label>
+                <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" formControlName="primeTimeStart" [attr.disabled]="hasEmptySlots ? true : null" class="form-control">
+              </div>
+              <div class="col">
+                <label>Prime-Time Bitiş</label>
+                <input type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" dateFormat="H:i" [time24hr]="true" formControlName="primeTimeEnd" [attr.disabled]="hasEmptySlots ? true : null" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" [disabled]="isGenerating || hasEmptySlots || scheduleForm.invalid" class="btn btn-primary submit-btn">
+            {{ isGenerating ? 'Takvim Üretiliyor...' : 'Takvimi Oluştur ve Satışa Aç' }}
+          </button>
+        </form>
+
+        <!-- Hata ve Mesajlar -->
+        <div *ngIf="hataListesi.length > 0" class="alert-danger mt-3">
+          <h5>Bazı Seanslar Çakışma Nedeniyle Üretilemedi:</h5>
+          <ul><li *ngFor="let h of hataListesi">{{ h }}</li></ul>
+        </div>
+        <p *ngIf="mesaj" class="alert-success mt-3">{{ mesaj }}</p>
+        <p *ngIf="hata" class="alert-danger mt-3">{{ hata }}</p>
+      </div>
+
+      <ng-template #selectWarning>
+        <div class="select-warning">Kuralları belirlemek ve takvim üretmek için lütfen yukarıdan bir saha seçin.</div>
+      </ng-template>
+    </div>
+
+    <!-- SAĞ TARAF: ÜRETİLEN İLANLARIN LİSTESİ -->
+    <div class="right-panel">
+      <div class="panel-header">
+        <h3>Üretilen Seanslar</h3>
+        <span class="count-badge">{{ courtSlots.length }} Adet</span>
+      </div>
+
+      <div *ngIf="courtSlots.length > 0" class="actions-bar">
+        <button (click)="cancelSchedule()" class="btn btn-outline-danger">Takvimi İptal Et</button>
+      </div>
+
+      <div *ngIf="courtSlots.length > 0; else noSlots" class="slots-list">
+        <div *ngFor="let slot of courtSlots" class="slot-card">
+          <div class="slot-info">
+            <strong>{{ (slot.startTime || slot.StartTime) | date:'dd.MM.yyyy' }}</strong>
+            <p>{{ (slot.startTime || slot.StartTime) | date:'HH:mm' }} - {{ (slot.endTime || slot.EndTime) | date:'HH:mm' }}</p>
+            <p class="price">{{ slot.price || slot.Price }} ₺</p>
+          </div>
+          <div class="slot-status">
+            <span class="badge" [ngClass]="(slot.isBooked || slot.IsBooked) ? 'badge-danger' : 'badge-success'">
+              {{ (slot.isBooked || slot.IsBooked) ? 'Dolu' : 'Müsait' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noSlots>
+        <div class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <p>Henüz bu saha için üretilmiş bir takvim bulunmuyor.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

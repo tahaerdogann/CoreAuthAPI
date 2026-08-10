@@ -1,0 +1,58 @@
+<div class="dashboard-container">
+  <h2>Özet</h2>
+  <p class="subtitle">İşletmenizin genel durumunu buradan takip edebilirsiniz.</p>
+
+  <div *ngIf="isLoading" class="loading-state">
+    Yükleniyor...
+  </div>
+
+  <div class="stats-grid" *ngIf="!isLoading">
+    <div class="stat-card">
+      <div class="stat-icon courts">
+        <i class="fas fa-futbol"></i>
+      </div>
+      <div class="stat-info">
+        <h3>Toplam Saha</h3>
+        <p class="stat-value">{{ stats.totalCourts }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon bookings">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="stat-info">
+        <h3>Onaylı Rezervasyon</h3>
+        <p class="stat-value">{{ stats.totalBookings }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon revenue">
+        <i class="fas fa-lira-sign"></i>
+      </div>
+      <div class="stat-info">
+        <h3>Beklenen Gelir</h3>
+        <p class="stat-value">{{ stats.activeRevenue }} ₺</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-actions" *ngIf="!isLoading">
+    <h3>Hızlı İşlemler</h3>
+    <div class="actions-grid">
+      <a routerLink="/owner/courts" class="action-card">
+        <i class="fas fa-plus-circle"></i>
+        <span>Saha Yönetimi</span>
+      </a>
+      <a routerLink="/owner/schedule" class="action-card">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Takvim Oluştur</span>
+      </a>
+      <a routerLink="/owner/bookings" class="action-card">
+        <i class="fas fa-list"></i>
+        <span>Rezervasyonları Gör</span>
+      </a>
+    </div>
+  </div>
+</div>

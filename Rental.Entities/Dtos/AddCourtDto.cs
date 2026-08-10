@@ -16,6 +16,7 @@ namespace Rental.Entities.Dtos
         public double? Longitude { get; set; }
         public FacilityAmenities Amenities { get; set; }
         public string RentalOptionsJson { get; set; } = string.Empty;
+        public bool IsPublished { get; set; } = true;
         public List<CourtPhotoDto> Photos { get; set; } = new();
     }
 

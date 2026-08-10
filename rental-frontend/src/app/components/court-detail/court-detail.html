@@ -15,6 +15,12 @@
 
   <div *ngIf="!isLoading && court && !pageError" class="main-content">
     
+    <!-- Preview Banner -->
+    <div *ngIf="!court.isPublished" class="preview-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div><strong>Önizleme Modu:</strong> Bu saha şu an yayında değil. Gördüğünüz sayfa, sahayı yayına aldığınızda kullanıcıların göreceği tasarımdır.</div>
+    </div>
+
     <!-- Hero Section: Airbnb Style Gallery -->
     <div class="hero-gallery" *ngIf="photosArray.length > 0">
       <div class="main-photo" (click)="openLightbox(0)">
@@ -46,7 +52,7 @@
         <div class="header-section">
           <div class="title-row">
             <h1>{{ court.name }}</h1>
-            <button class="fav-btn" (click)="toggleFavorite()" [title]="isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'">
+            <button class="fav-btn" (click)="!court.isPublished ? null : toggleFavorite()" [title]="isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'" [disabled]="!court.isPublished" [class.disabled]="!court.isPublished">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" [ngClass]="isFavorite ? 'heart-icon-active' : 'heart-icon-inactive'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
           </div>
@@ -184,7 +190,9 @@
                   <span class="slot-time">{{ slot.startTime | date:'HH:mm' }} - {{ slot.endTime | date:'HH:mm' }}</span>
                   <span class="slot-price">{{ slot.price }} ₺</span>
                 </div>
-                <button *ngIf="!slot.isBooked" class="book-btn" (click)="openConfirmModal(slot)">KİRALA</button>
+                <button *ngIf="!slot.isBooked" class="book-btn" (click)="!court.isPublished ? null : openConfirmModal(slot)" [disabled]="!court.isPublished" [class.disabled-btn]="!court.isPublished">
+                  {{ court.isPublished ? 'KİRALA' : 'ÖNİZLEME' }}
+                </button>
                 <button *ngIf="slot.isBooked" class="booked-btn" disabled>DOLU</button>
               </div>
               <div *ngIf="filteredSlots.length === 0" class="empty-state">Bu gün için boş seans bulunamadı.</div>

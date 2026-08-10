@@ -22,6 +22,7 @@ namespace Rental.Entities.Entity
         public double? Longitude { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public bool IsPublished { get; set; } = false; // Müşterilere görünüp görünmeme durumu
         public Guid OwnerId { get; set; }
 
         public ICollection<CourtPhoto> Photos { get; set; } = new List<CourtPhoto>();
