@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using Rental.Entities.Enum;
 
 namespace Rental.Entities.Entity
 {
@@ -13,7 +14,8 @@ namespace Rental.Entities.Entity
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; } // Bu saat diliminin ücreti
 
-        public bool IsBooked { get; set; } = false; // Biri kiraladı mı? (Dolu/Boş)
+        public SlotStatus Status { get; set; } = SlotStatus.Available; // Slot durumu (Boş, Kiralandı, Bakımda)
+        public string? MaintenanceNote { get; set; } // Bakım notu
         public Guid? RenterId { get; set; } // Kim kiraladı? (Henüz boşsa null)
     }
 }

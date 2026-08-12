@@ -4,6 +4,7 @@ namespace Rental.Entities.Enum
     {
         Pending = 0,
         Approved = 1,
-        Cancelled = 2
+        Cancelled = 2,
+        Completed = 3
     }
 }

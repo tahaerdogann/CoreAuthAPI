@@ -30,10 +30,13 @@
           <span style="display: flex; align-items: center; gap: 4px; font-weight: 600; color: #10b981;">
             {{ item.price }} ₺
           </span>
+          <span *ngIf="item.status === 3" style="display: flex; align-items: center; gap: 4px; font-weight: 600; color: #10b981;">
+            Tamamlandı
+          </span>
         </div>
       </div>
       <div>
-        <button (click)="openCancelModal(item)" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#fca5a5'; this.style.color='white'" onmouseout="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444'">İptal Et</button>
+        <button *ngIf="item.status !== 3" (click)="openCancelModal(item)" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#fca5a5'; this.style.color='white'" onmouseout="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444'">İptal Et</button>
       </div>
     </div>
   </div>
@@ -45,11 +48,12 @@
 
     <div *ngFor="let item of pastBookings" style="background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; opacity: 0.85;">
       <div>
-        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #334155; font-weight: 600; text-decoration: {{ item.isCancelled ? 'line-through' : 'none' }};">{{ item.courtName }}</h3>
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #334155; font-weight: 600; text-decoration: {{ item.status === 2 ? 'line-through' : 'none' }};">{{ item.courtName }}</h3>
         <div style="display: flex; gap: 16px; color: #94a3b8; font-size: 13px;">
           <span>{{ item.startTime | date:'dd.MM.yyyy HH:mm' }}</span>
           <span>{{ item.price }} ₺</span>
-          <span *ngIf="item.isCancelled" style="color: #ef4444; font-weight: 600;">İptal Edildi</span>
+          <span *ngIf="item.status === 2" style="color: #ef4444; font-weight: 600;">İptal Edildi</span>
+          <span *ngIf="item.status === 3" style="color: #10b981; font-weight: 600;">Tamamlandı</span>
         </div>
       </div>
       <div>

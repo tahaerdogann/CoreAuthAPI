@@ -25,7 +25,7 @@ declare var google: any;
           <span class="search-icon">🔍</span>
         </div>
         <button type="button" class="btn-locate" (click)="getCurrentLocation()" [disabled]="isLocating">
-          <span class="locate-icon">📍</span>
+          <span class="locate-icon"></span>
           {{ isLocating ? 'Konum alınıyor...' : 'Konumumu Bul' }}
         </button>
       </div>

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
+import { AlertModalComponent } from '../../shared/alert-modal.component';
 
 @Component({
   selector: 'app-bookings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AlertModalComponent],
   templateUrl: './bookings.html',
   styleUrls: ['./bookings.css']
 })
@@ -16,6 +17,16 @@ export class BookingsComponent implements OnInit {
   selectedCourtId: string = '';
   slots: any[] = [];
   isLoading = false;
+
+  // Modal Props
+  alertModalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success'|'error'|'warning'|'info',
+    isConfirm: false
+  };
+  pendingAction: (() => void) | null = null;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
@@ -72,6 +83,11 @@ export class BookingsComponent implements OnInit {
     return this.myCourts.find((c: any) => (c.id || c.Id) === this.selectedCourtId);
   }
 
+  get filteredSlots() {
+    // Yalnızca Bekliyor (0) ve Onaylandı (1) statüsündekileri göster
+    return this.slots.filter(s => s.status === 0 || s.status === 1);
+  }
+
   toggleAutoApprove() {
     if (!this.selectedCourtId) return;
     const token = localStorage.getItem('token');
@@ -81,12 +97,13 @@ export class BookingsComponent implements OnInit {
         if(this.selectedCourt) {
             this.selectedCourt.isAutoApproveEnabled = res.isAutoApproveEnabled;
         }
-        alert(res.message);
+        this.alertModalState = { isOpen: true, title: 'Başarılı', message: res.message, type: 'success', isConfirm: false };
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error(err);
-        alert(err.error?.message || 'Hata oluştu');
+        this.alertModalState = { isOpen: true, title: 'Hata', message: err.error?.message || 'Hata oluştu', type: 'error', isConfirm: false };
+        this.cdr.detectChanges();
       }
     });
   }
@@ -94,32 +111,31 @@ export class BookingsComponent implements OnInit {
   updateStatus(bookingId: string, newStatus: number) {
     if (!bookingId) return;
     
-    if (confirm('Emin misiniz?')) {
+    let actionName = newStatus === 1 ? 'onaylamak' : 'iptal etmek';
+    
+    this.alertModalState = {
+      isOpen: true,
+      title: 'Emin misiniz?',
+      message: `Bu rezervasyonu ${actionName} istediğinize emin misiniz?`,
+      type: newStatus === 1 ? 'info' : 'warning',
+      isConfirm: true
+    };
+
+    this.pendingAction = () => {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
       this.http.post(`${environment.apiUrl}/Bookings/update-status/${bookingId}`, { status: newStatus }, { headers }).subscribe({
         next: (res: any) => {
-          alert(res.message);
+          this.alertModalState = { isOpen: true, title: 'Başarılı', message: res.message, type: 'success', isConfirm: false };
           this.loadBookedSlots();
+          this.cdr.detectChanges();
         },
-        error: (err) => alert(err.error?.message || 'Hata oluştu')
+        error: (err) => {
+          this.alertModalState = { isOpen: true, title: 'Hata', message: err.error?.message || 'Hata oluştu', type: 'error', isConfirm: false };
+          this.cdr.detectChanges();
+        }
       });
-    }
-  }
-
-  openSlot(slotId: string) {
-    // Manuel kapatılmış slotu tekrar açmak (toggle-slot)
-    if (confirm('Bu seansı tekrar kiralamaya açmak istediğinize emin misiniz?')) {
-      const token = localStorage.getItem('token');
-      const headers = { 'Authorization': `Bearer ${token}` };
-      this.http.post(`${environment.apiUrl}/Courts/toggle-slot/${slotId}`, {}, { headers }).subscribe({
-        next: (res: any) => {
-          alert('Seans açıldı.');
-          this.loadBookedSlots();
-        },
-        error: (err) => alert(err.error || 'Hata oluştu')
-      });
-    }
+    };
   }
 
   getStatusBadge(status: number) {
@@ -127,7 +143,15 @@ export class BookingsComponent implements OnInit {
       case 0: return { class: 'badge-warning', text: 'Bekliyor' };
       case 1: return { class: 'badge-success', text: 'Onaylandı' };
       case 2: return { class: 'badge-danger', text: 'İptal Edildi' };
+      case 3: return { class: 'badge-primary', text: 'Tamamlandı' };
       default: return { class: 'badge-secondary', text: 'Bilinmiyor' };
+    }
+  }
+
+  onAlertConfirm() {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
     }
   }
 }

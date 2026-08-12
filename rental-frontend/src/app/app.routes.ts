@@ -5,8 +5,6 @@ import { RegisterComponent } from './components/register/register';
 import { Dashboard } from './components/dashboard/dashboard';
 import { CourtDetailComponent } from './components/court-detail/court-detail';
 import { AuthService } from './services/auth';
-import { OwnerDashboardComponent } from './components/owner-dashboard/owner-dashboard';
-import { SahaEkleComponent } from './components/saha-ekle/saha-ekle';
 
 // ... (Guard fonksiyonları aynen kalıyor: guestGuard, authGuard, ownerGuard) ...
 

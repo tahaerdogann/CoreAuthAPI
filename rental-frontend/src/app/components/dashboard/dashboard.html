@@ -235,4 +235,13 @@
       </div>
     </div>
   </div>
+
+  <app-alert-modal
+    [isOpen]="alertModalState.isOpen"
+    [title]="alertModalState.title"
+    [message]="alertModalState.message"
+    [type]="alertModalState.type"
+    [isConfirm]="alertModalState.isConfirm"
+    (onClose)="alertModalState.isOpen = false">
+  </app-alert-modal>
 </div>

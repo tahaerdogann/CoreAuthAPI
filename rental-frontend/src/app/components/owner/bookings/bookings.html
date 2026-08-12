@@ -1,10 +1,10 @@
 <div class="bookings-container">
   <div class="header-section">
-    <h2>Rezervasyonlar ve Kapalı Seanslar</h2>
+    <h2>Rezervasyonlar</h2>
     <div class="header-actions">
       <div class="auto-approve-toggle" *ngIf="selectedCourtId && selectedCourt">
         <label class="switch-wrapper">
-          <span>Otomatik Onay (Anında Booking): </span>
+          <span>Otomatik Onay: </span>
           <label class="switch">
             <input type="checkbox" [checked]="selectedCourt.isAutoApproveEnabled" (change)="toggleAutoApprove()">
             <span class="slider round"></span>
@@ -14,7 +14,7 @@
 
       <div class="filter-group">
         <label>Saha Filtrele:</label>
-        <select [(ngModel)]="selectedCourtId" (change)="onFilterChange()" class="form-control">
+        <select [(ngModel)]="selectedCourtId" (ngModelChange)="onFilterChange()" class="form-control">
           <option value="">Tüm Sahalarım</option>
           <option *ngFor="let court of myCourts" [value]="court.id || court.Id">{{ court.name || court.Name }}</option>
         </select>
@@ -26,12 +26,12 @@
     Yükleniyor...
   </div>
 
-  <div *ngIf="!isLoading && slots.length === 0" class="empty-state">
+  <div *ngIf="!isLoading && filteredSlots.length === 0" class="empty-state">
     <i class="fas fa-inbox"></i>
-    <p>Görüntülenecek rezervasyon veya kapalı seans bulunmuyor.</p>
+    <p>Görüntülenecek rezervasyon bulunmuyor.</p>
   </div>
 
-  <div class="table-responsive" *ngIf="!isLoading && slots.length > 0">
+  <div class="table-responsive" *ngIf="!isLoading && filteredSlots.length > 0">
     <table class="table">
       <thead>
         <tr>
@@ -45,52 +45,46 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let slot of slots">
+        <tr *ngFor="let slot of filteredSlots">
           <td>
             <strong>{{ slot.startTime | date:'dd.MM.yyyy' }}</strong><br>
             {{ slot.startTime | date:'HH:mm' }} - {{ slot.endTime | date:'HH:mm' }}
           </td>
           <td>{{ slot.courtName }}</td>
           
-          <!-- Manuel Kapatma mı yoksa Rezervasyon mu? -->
-          <ng-container *ngIf="slot.isManualClose; else bookingDetails">
-            <td colspan="2" class="text-muted">
-              <em><i class="fas fa-lock"></i> Manuel Olarak Kapatıldı (Saha Bakımı vs.)</em>
-            </td>
-            <td>-</td>
-            <td><span class="badge badge-secondary">Kapalı</span></td>
-            <td>
-              <button class="btn btn-sm btn-success" (click)="openSlot(slot.slotId)">
-                <i class="fas fa-unlock"></i> Aç
-              </button>
-            </td>
-          </ng-container>
-
-          <ng-template #bookingDetails>
-            <td>{{ slot.customerName }}</td>
-            <td>{{ slot.customerPhone }}</td>
-            <td>{{ slot.price }} TL</td>
-            <td>
-              <span class="badge" [ngClass]="getStatusBadge(slot.status).class">
-                {{ getStatusBadge(slot.status).text }}
-              </span>
-            </td>
-            <td>
-              <!-- Eğer Pending (0) ise Onayla butonu -->
-              <button *ngIf="slot.status === 0" class="btn btn-sm btn-success action-btn" (click)="updateStatus(slot.bookingId, 1)">
-                <i class="fas fa-check"></i> Onayla
-              </button>
-              
-              <!-- Eğer Pending (0) veya Approved (1) ise İptal Et butonu -->
-              <button *ngIf="slot.status === 0 || slot.status === 1" class="btn btn-sm btn-danger action-btn" (click)="updateStatus(slot.bookingId, 2)">
-                <i class="fas fa-times"></i> İptal
-              </button>
-              
-              <span *ngIf="slot.status === 2" class="text-muted">İşlem yapılamaz</span>
-            </td>
-          </ng-template>
+          <td>{{ slot.customerName }}</td>
+          <td>{{ slot.customerPhone }}</td>
+          <td>{{ slot.price }} TL</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadge(slot.status).class">
+              {{ getStatusBadge(slot.status).text }}
+            </span>
+          </td>
+          <td>
+            <!-- Eğer Pending (0) ise Onayla butonu -->
+            <button *ngIf="slot.status === 0" class="btn btn-sm btn-success action-btn" (click)="updateStatus(slot.bookingId, 1)">
+              <i class="fas fa-check"></i> Onayla
+            </button>
+            
+            <!-- Eğer Pending (0) veya Approved (1) ise İptal Et butonu -->
+            <button *ngIf="slot.status === 0 || slot.status === 1" class="btn btn-sm btn-danger action-btn" (click)="updateStatus(slot.bookingId, 2)">
+              <i class="fas fa-times"></i> İptal
+            </button>
+            
+            <span *ngIf="slot.status === 2 || slot.status === 3" class="text-muted">İşlem yapılamaz</span>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
+
+  <app-alert-modal
+    [isOpen]="alertModalState.isOpen"
+    [title]="alertModalState.title"
+    [message]="alertModalState.message"
+    [type]="alertModalState.type"
+    [isConfirm]="alertModalState.isConfirm"
+    (onConfirm)="onAlertConfirm()"
+    (onClose)="alertModalState.isOpen = false">
+  </app-alert-modal>
 </div>

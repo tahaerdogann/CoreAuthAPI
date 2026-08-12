@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BookingService } from '../../../services/booking';
 import { Router } from '@angular/router';
@@ -18,7 +18,7 @@ export class SessionsComponent implements OnInit {
   cancelModalVisible = false;
   bookingToCancel: any = null;
 
-  constructor(private bookingService: BookingService, private router: Router) {}
+  constructor(private bookingService: BookingService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadBookings();
@@ -29,10 +29,11 @@ export class SessionsComponent implements OnInit {
       next: (data) => {
         this.bookings = data;
         const now = new Date().getTime();
-        this.upcomingBookings = this.bookings.filter(b => new Date(b.startTime).getTime() >= now && !b.isCancelled);
+        this.upcomingBookings = this.bookings.filter(b => new Date(b.startTime).getTime() >= now && b.status !== 2);
         // Past includes cancelled ones as history or just past ones
-        this.pastBookings = this.bookings.filter(b => new Date(b.startTime).getTime() < now || b.isCancelled)
+        this.pastBookings = this.bookings.filter(b => new Date(b.startTime).getTime() < now || b.status === 2)
                                           .sort((a,b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+        this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });

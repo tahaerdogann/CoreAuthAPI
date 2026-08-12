@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Rental.DataAccess.Context;
 using Rental.Entities.Entity;
+using Rental.Entities.Enum;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace CoreAuthAPI.Controllers
 {
@@ -30,26 +33,25 @@ namespace CoreAuthAPI.Controllers
             if (slot == null)
                 return NotFound("İlgili seans bulunamadı.");
 
-            if (slot.IsBooked)
-                return BadRequest("Bu seans zaten kiralanmış.");
+            if (slot.Status != SlotStatus.Available)
+                return BadRequest("Bu seans zaten kiralanmış veya bakıma alınmış.");
 
             var court = _context.Courts.FirstOrDefault(c => c.Id == slot.CourtId);
-            var isAutoApprove = court?.IsAutoApproveEnabled ?? false;
+            if (court == null || !court.IsPublished)
+                return BadRequest("Bu saha şu anda yayında olmadığı için kiralama yapılamaz.");
 
-            // Kiralama işlemini kaydet
+            var isAutoApprove = court.IsAutoApproveEnabled;
+
             var booking = new Booking
             {
                 CourtSlotId = slot.Id,
                 CustomerId = userId,
-                Status = isAutoApprove ? Rental.Entities.Enum.BookingStatus.Approved : Rental.Entities.Enum.BookingStatus.Pending,
+                Status = isAutoApprove ? BookingStatus.Approved : BookingStatus.Pending,
                 RecordDate = DateTime.Now,
                 RecordUserCode = userId
             };
 
-            // Eğer onaylandıysa slotu da rezerve et, beklemedeyse başkası alabilir veya sadece slot isBooked işaretlenip pending durabilir.
-            // İş mantığı gereği, beklemede olsa bile başkası alamasın diye IsBooked yapıyoruz. 
-            // Sahibin reddetme ihtimaline karşı.
-            slot.IsBooked = true;
+            slot.Status = SlotStatus.Booked;
             slot.RenterId = userId;
 
             _context.Bookings.Add(booking);
@@ -57,6 +59,78 @@ namespace CoreAuthAPI.Controllers
 
             return Ok(new { message = "Kiralama işlemi başarıyla gerçekleştirildi!", bookingId = booking.Id });
         }
+
+        [HttpPost("external-booking")]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult CreateExternalBooking([FromBody] CreateExternalBookingRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
+                return Unauthorized("Kullanıcı kimliği alınamadı.");
+
+            var slot = _context.CourtSlots.FirstOrDefault(s => s.Id == request.SlotId);
+            if (slot == null) return NotFound("İlgili seans bulunamadı.");
+            if (slot.Status != SlotStatus.Available) return BadRequest("Bu seans zaten kiralanmış veya bakıma alınmış.");
+
+            var court = _context.Courts.FirstOrDefault(c => c.Id == slot.CourtId);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Admin" && court?.OwnerId.ToString() != userIdStr)
+                return Unauthorized("Bu sahanın sahibi değilsiniz.");
+
+            var booking = new Booking
+            {
+                CourtSlotId = slot.Id,
+                CustomerId = null, // Dışarıdan kiralama
+                ExternalCustomerName = request.ExternalCustomerName,
+                ExternalCustomerPhone = request.ExternalCustomerPhone,
+                Status = BookingStatus.Approved,
+                RecordDate = DateTime.Now,
+                RecordUserCode = userId
+            };
+
+            slot.Status = SlotStatus.Booked;
+            slot.RenterId = null;
+
+            _context.Bookings.Add(booking);
+            _context.SaveChanges();
+
+            return Ok(new { message = "Dışarıdan kiralama işlemi başarıyla eklendi!", bookingId = booking.Id });
+        }
+
+        [HttpPut("courtslots/{slotId:guid}/maintenance")]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult SetMaintenance(Guid slotId, [FromBody] SetMaintenanceRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
+                return Unauthorized("Kullanıcı kimliği alınamadı.");
+
+            var slot = _context.CourtSlots.FirstOrDefault(s => s.Id == slotId);
+            if (slot == null) return NotFound("İlgili seans bulunamadı.");
+
+            var court = _context.Courts.FirstOrDefault(c => c.Id == slot.CourtId);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Admin" && court?.OwnerId.ToString() != userIdStr)
+                return Unauthorized("Bu sahanın sahibi değilsiniz.");
+
+            if (slot.Status == SlotStatus.Booked)
+                return BadRequest("Kiralı olan bir seansı doğrudan bakıma alamazsınız. Önce kiralamayı iptal edin.");
+
+            if (request.IsMaintenance)
+            {
+                slot.Status = SlotStatus.Maintenance;
+                slot.MaintenanceNote = request.Note;
+            }
+            else
+            {
+                slot.Status = SlotStatus.Available;
+                slot.MaintenanceNote = null;
+            }
+
+            _context.SaveChanges();
+            return Ok(new { message = request.IsMaintenance ? "Seans bakıma alındı." : "Seans bakımdan çıkarıldı, kiralanabilir." });
+        }
+
 
         [HttpGet("my-bookings")]
         public IActionResult GetMyBookings()
@@ -93,16 +167,17 @@ namespace CoreAuthAPI.Controllers
 
             var booking = _context.Bookings.FirstOrDefault(b => b.Id == bookingId && b.CustomerId == userId);
             if (booking == null) return NotFound("Kiralama kaydı bulunamadı.");
-            if (booking.Status == Rental.Entities.Enum.BookingStatus.Cancelled) return BadRequest("Bu kayıt zaten iptal edilmiş.");
+            if (booking.Status == BookingStatus.Cancelled) return BadRequest("Bu kayıt zaten iptal edilmiş.");
+            if (booking.Status == BookingStatus.Completed) return BadRequest("Tamamlanmış seanslar iptal edilemez.");
 
             var slot = _context.CourtSlots.FirstOrDefault(s => s.Id == booking.CourtSlotId);
             if (slot != null)
             {
-                slot.IsBooked = false;
+                slot.Status = SlotStatus.Available;
                 slot.RenterId = null;
             }
             
-            booking.Status = Rental.Entities.Enum.BookingStatus.Cancelled;
+            booking.Status = BookingStatus.Cancelled;
             _context.SaveChanges();
 
             return Ok(new { message = "Seans başarıyla iptal edildi." });
@@ -117,7 +192,7 @@ namespace CoreAuthAPI.Controllers
 
             var query = from s in _context.CourtSlots
                         join c in _context.Courts on s.CourtId equals c.Id
-                        where s.IsBooked
+                        where s.Status != SlotStatus.Available
                         select new { s, c };
 
             if (userRole != "Admin")
@@ -130,24 +205,33 @@ namespace CoreAuthAPI.Controllers
                 query = query.Where(x => x.c.Id == courtId.Value);
             }
 
-            var slots = query
-                .OrderByDescending(x => x.s.StartTime)
-                .Select(x => new
-                {
-                    SlotId = x.s.Id,
-                    CourtId = x.s.CourtId,
-                    CourtName = x.c.Name,
-                    StartTime = x.s.StartTime,
-                    EndTime = x.s.EndTime,
-                    Price = x.s.Price,
-                    IsManualClose = x.s.RenterId == null,
-                    BookingId = _context.Bookings.Where(b => b.CourtSlotId == x.s.Id).Select(b => (Guid?)b.Id).FirstOrDefault(),
-                    Status = _context.Bookings.Where(b => b.CourtSlotId == x.s.Id).Select(b => (int?)b.Status).FirstOrDefault(),
-                    CustomerName = _context.Users.Where(u => u.Id == x.s.RenterId).Select(u => u.Name + " " + u.Surname).FirstOrDefault(),
-                    CustomerPhone = _context.Users.Where(u => u.Id == x.s.RenterId).Select(u => u.PhoneNumber).FirstOrDefault()
+            var slotsInfo = query.OrderByDescending(x => x.s.StartTime).ToList();
+
+            var slots = slotsInfo
+                .Select(x => {
+                    var booking = _context.Bookings.FirstOrDefault(b => b.CourtSlotId == x.s.Id);
+                    var customerName = booking?.ExternalCustomerName ?? _context.Users.Where(u => u.Id == x.s.RenterId).Select(u => u.Name + " " + u.Surname).FirstOrDefault();
+                    var customerPhone = booking?.ExternalCustomerPhone ?? _context.Users.Where(u => u.Id == x.s.RenterId).Select(u => u.PhoneNumber).FirstOrDefault();
+
+                    return new
+                    {
+                        SlotId = x.s.Id,
+                        CourtId = x.s.CourtId,
+                        CourtName = x.c.Name,
+                        StartTime = x.s.StartTime,
+                        EndTime = x.s.EndTime,
+                        Price = x.s.Price,
+                        SlotStatus = x.s.Status.ToString(),
+                        MaintenanceNote = x.s.MaintenanceNote,
+                        IsManualClose = x.s.Status == SlotStatus.Maintenance || (x.s.Status == SlotStatus.Booked && x.s.RenterId == null),
+                        BookingId = booking?.Id,
+                        Status = booking != null ? (int?)booking.Status : null,
+                        CustomerName = customerName,
+                        CustomerPhone = customerPhone
+                    };
                 }).ToList();
 
-            // Geçmişte kalmış ve hala "Pending" (0) statüsünde olan rezervasyonları listeden çıkarıyoruz (veya iptal edilmiş sayıyoruz)
+            // Geçmişte kalmış ve hala "Pending" (0) statüsünde olan rezervasyonları listeden çıkarıyoruz
             var now = DateTime.Now;
             slots = slots.Where(s => !(s.Status == 0 && s.StartTime < now)).ToList();
 
@@ -173,16 +257,19 @@ namespace CoreAuthAPI.Controllers
             if (userRole != "Admin" && slotInfo.c.OwnerId.ToString() != userIdStr)
                 return Unauthorized("Bu işlem için yetkiniz yok.");
 
+            if (booking.Status == BookingStatus.Completed)
+                return BadRequest("Tamamlanmış seanslar üzerinde işlem yapılamaz.");
+
             booking.Status = request.Status;
 
-            if (request.Status == Rental.Entities.Enum.BookingStatus.Cancelled)
+            if (request.Status == BookingStatus.Cancelled)
             {
-                slotInfo.s.IsBooked = false;
+                slotInfo.s.Status = SlotStatus.Available;
                 slotInfo.s.RenterId = null;
             }
-            else if (request.Status == Rental.Entities.Enum.BookingStatus.Approved)
+            else if (request.Status == BookingStatus.Approved)
             {
-                slotInfo.s.IsBooked = true;
+                slotInfo.s.Status = SlotStatus.Booked;
                 slotInfo.s.RenterId = booking.CustomerId;
             }
 
@@ -193,11 +280,24 @@ namespace CoreAuthAPI.Controllers
 
     public class UpdateBookingStatusRequest
     {
-        public Rental.Entities.Enum.BookingStatus Status { get; set; }
+        public BookingStatus Status { get; set; }
     }
 
     public class CreateBookingRequest
     {
         public Guid SlotId { get; set; }
+    }
+
+    public class CreateExternalBookingRequest
+    {
+        public Guid SlotId { get; set; }
+        public string? ExternalCustomerName { get; set; }
+        public string? ExternalCustomerPhone { get; set; }
+    }
+
+    public class SetMaintenanceRequest
+    {
+        public bool IsMaintenance { get; set; }
+        public string? Note { get; set; }
     }
 }

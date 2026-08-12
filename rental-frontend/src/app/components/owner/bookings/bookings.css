@@ -157,7 +157,6 @@ input:checked + .slider:before {
   font-size: 0.85rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
 }
 
 .btn-success { background: var(--primary-color, #2bd965); color: white; }

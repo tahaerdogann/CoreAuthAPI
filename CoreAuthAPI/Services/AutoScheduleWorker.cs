@@ -39,6 +39,8 @@ namespace CoreAuthAPI.Services
 
                 try
                 {
+                    await UpdateBookingStatusesAsync();
+                    
                     // Her 1 dakikada bir saati kontrol et
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
@@ -94,6 +96,41 @@ namespace CoreAuthAPI.Services
             }
         }
 
+        private async Task UpdateBookingStatusesAsync()
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<RentalDbContext>();
+                var now = DateTime.Now;
+
+                // Başlama zamanı gelmiş veya geçmiş olan, ama statüsü Pending(0) veya Approved(1) olanları al
+                var bookingsToUpdate = context.Bookings
+                    .Where(b => (b.Status == Rental.Entities.Enum.BookingStatus.Pending || b.Status == Rental.Entities.Enum.BookingStatus.Approved))
+                    .Join(context.CourtSlots, b => b.CourtSlotId, s => s.Id, (b, s) => new { Booking = b, Slot = s })
+                    .Where(bs => bs.Slot.StartTime <= now)
+                    .ToList();
+
+                foreach (var item in bookingsToUpdate)
+                {
+                    if (item.Booking.Status == Rental.Entities.Enum.BookingStatus.Pending)
+                    {
+                        item.Booking.Status = Rental.Entities.Enum.BookingStatus.Cancelled;
+                        item.Slot.Status = Rental.Entities.Enum.SlotStatus.Available;
+                        item.Slot.RenterId = null;
+                    }
+                    else if (item.Booking.Status == Rental.Entities.Enum.BookingStatus.Approved)
+                    {
+                        item.Booking.Status = Rental.Entities.Enum.BookingStatus.Completed;
+                    }
+                }
+
+                if (bookingsToUpdate.Any())
+                {
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+
         private void GenerateSlotsForDate(RentalDbContext context, CourtSchedule schedule, DateTime date)
         {
             var dayOfWeek = (int)date.DayOfWeek;
@@ -139,7 +176,7 @@ namespace CoreAuthAPI.Services
                         StartTime = slotStartTime,
                         EndTime = slotEndTime,
                         Price = currentPrice,
-                        IsBooked = false
+                        Status = Rental.Entities.Enum.SlotStatus.Available
                     });
                 }
 

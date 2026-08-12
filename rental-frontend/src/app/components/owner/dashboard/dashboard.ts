@@ -28,6 +28,7 @@ export class DashboardComponent implements OnInit {
   stats = {
     totalCourts: 0,
     totalBookings: 0,
+    pendingBookings: 0,
     activeRevenue: 0
   };
   isLoading = true;
@@ -82,12 +83,14 @@ export class DashboardComponent implements OnInit {
             if (slotsRes && slotsRes.$values) slots = slotsRes.$values;
             else if (Array.isArray(slotsRes)) slots = slotsRes;
             
-            // Sadece Approved (status === 1) olanları al
-            const activeBookings = slots.filter((s: any) => !s.isManualClose && s.status === 1);
+            // Approved (status === 1) ve Completed (status === 3) olanları al (grafik ve gelir için)
+            const activeBookings = slots.filter((s: any) => s.status === 1 || s.status === 3);
+            const pendingBookingsList = slots.filter((s: any) => s.status === 0);
+            
             this.allBookings = activeBookings;
             
             this.stats.totalBookings = activeBookings.length;
-            this.stats.activeRevenue = activeBookings.reduce((sum: number, current: any) => sum + (current.price || 0), 0);
+            this.stats.pendingBookings = pendingBookingsList.length;
             
             this.updateChartData();
             this.isLoading = false;
@@ -179,6 +182,10 @@ export class DashboardComponent implements OnInit {
       { name: "Geçmiş Gelir (₺)", data: pastRevenue },
       { name: "Beklenen Gelir (₺)", data: futureRevenue }
     ];
+    
+    // Filtrelenen zamana göre toplam geliri güncelle
+    this.stats.activeRevenue = pastRevenue.reduce((a,b) => a+b, 0) + futureRevenue.reduce((a,b) => a+b, 0);
+    
     this.cdr.detectChanges();
   }
 

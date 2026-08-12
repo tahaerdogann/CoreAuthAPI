@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } 
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { FlatpickrModule } from 'angularx-flatpickr';
+import { AlertModalComponent } from '../../shared/alert-modal.component';
 
 @Component({
   selector: 'app-schedule',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, FlatpickrModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FlatpickrModule, AlertModalComponent],
   templateUrl: './schedule.html',
   styleUrls: ['./schedule.css']
 })
@@ -23,6 +24,24 @@ export class ScheduleComponent implements OnInit {
   isGenerating: boolean = false;
   isAutoScheduleEnabled: boolean = false;
   hasEmptySlots: boolean = false;
+
+  // Modal Props
+  alertModalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success'|'error'|'warning'|'info',
+    isConfirm: false
+  };
+  pendingAction: (() => void) | null = null;
+
+  // Action Modal Props (Dışarıdan Ekle & Bakıma Al)
+  isSlotActionModalOpen = false;
+  activeTab: 'external' | 'maintenance' = 'external';
+  selectedSlotForAction: any = null;
+  externalCustomerName: string = '';
+  externalCustomerPhone: string = '';
+  maintenanceNote: string = '';
 
   daysConfig = [
     { dayOfWeek: 1, name: 'Pazartesi', isActive: true, openTime: '10:00', closeTime: '23:59' },
@@ -89,10 +108,107 @@ export class ScheduleComponent implements OnInit {
         else if (Array.isArray(res)) this.courtSlots = res;
         else this.courtSlots = [];
         
-        this.hasEmptySlots = this.courtSlots.some(s => !(s.isBooked || s.IsBooked));
+        // Sadece 1 (Available) olan slotlar "empty" olarak sayılır.
+        this.hasEmptySlots = this.courtSlots.some(s => (s.status || s.Status) === 1);
         this.cdr.detectChanges();
       },
       error: (err) => console.error("Slotlar çekilemedi:", err)
+    });
+  }
+
+  getSlotStatus(slot: any) {
+    const status = slot.status || slot.Status || 1; // Default 1
+    if (status === 1) return { text: 'Müsait', class: 'badge-success' };
+    if (status === 2) return { text: 'Dolu', class: 'badge-danger' };
+    if (status === 3) return { text: 'Bakımda', class: 'badge-warning' };
+    return { text: 'Müsait', class: 'badge-success' };
+  }
+
+  openSlotActionModal(slot: any) {
+    this.selectedSlotForAction = slot;
+    const status = slot.status || slot.Status || 1;
+    
+    if (status === 1) { 
+      // Available
+      this.isSlotActionModalOpen = true;
+      this.activeTab = 'external';
+      this.externalCustomerName = '';
+      this.externalCustomerPhone = '';
+      this.maintenanceNote = '';
+    } else if (status === 2) {
+      // Booked
+      this.alertModalState = {
+        isOpen: true,
+        title: 'Bilgi',
+        message: 'Bu seans dolu (Kiralandı). İptal etmek veya rezervasyon detaylarını görmek için sol menüdeki "Rezervasyonlar" sayfasına gidiniz.',
+        type: 'info',
+        isConfirm: false
+      };
+    } else if (status === 3) {
+      // Maintenance
+      this.alertModalState = {
+        isOpen: true,
+        title: 'Bakımı Bitir',
+        message: 'Bu slotu bakımdan çıkarıp tekrar kiralamaya açmak istiyor musunuz?',
+        type: 'warning',
+        isConfirm: true
+      };
+      this.pendingAction = () => {
+        this.submitMaintenance(false);
+      };
+    }
+  }
+
+  closeSlotActionModal() {
+    this.isSlotActionModalOpen = false;
+  }
+
+  submitExternalBooking() {
+    if(!this.externalCustomerName) {
+      this.alertModalState = { isOpen: true, title: 'Hata', message: 'Müşteri adı zorunludur.', type: 'error', isConfirm: false };
+      return;
+    }
+    const slotId = this.selectedSlotForAction.id || this.selectedSlotForAction.Id;
+    const payload = {
+      slotId: slotId,
+      externalCustomerName: this.externalCustomerName,
+      externalCustomerPhone: this.externalCustomerPhone
+    };
+    
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    
+    this.http.post(`${environment.apiUrl}/Bookings/external-booking`, payload, { headers }).subscribe({
+      next: (res: any) => {
+        this.isSlotActionModalOpen = false;
+        this.alertModalState = { isOpen: true, title: 'Başarılı', message: res.message, type: 'success', isConfirm: false };
+        this.loadCourtSlots(this.selectedCourtId!);
+      },
+      error: (err) => {
+        this.alertModalState = { isOpen: true, title: 'Hata', message: err.error?.message || 'Hata oluştu.', type: 'error', isConfirm: false };
+      }
+    });
+  }
+
+  submitMaintenance(isMaintenance: boolean = true) {
+    const slotId = this.selectedSlotForAction.id || this.selectedSlotForAction.Id;
+    const payload = {
+      isMaintenance: isMaintenance,
+      note: this.maintenanceNote
+    };
+    
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    
+    this.http.put(`${environment.apiUrl}/Bookings/courtslots/${slotId}/maintenance`, payload, { headers }).subscribe({
+      next: (res: any) => {
+        this.isSlotActionModalOpen = false;
+        this.alertModalState = { isOpen: true, title: 'Başarılı', message: res.message, type: 'success', isConfirm: false };
+        this.loadCourtSlots(this.selectedCourtId!);
+      },
+      error: (err) => {
+        this.alertModalState = { isOpen: true, title: 'Hata', message: err.error?.message || 'Hata oluştu.', type: 'error', isConfirm: false };
+      }
     });
   }
 
@@ -150,21 +266,36 @@ export class ScheduleComponent implements OnInit {
   cancelSchedule() {
     if (!this.selectedCourtId) return;
     
-    if (confirm("Takvimlendirmeyi iptal etmek istediğinize emin misiniz? Boş seanslar silinecektir.")) {
+    this.alertModalState = {
+      isOpen: true,
+      title: 'Emin misiniz?',
+      message: 'Takvimlendirmeyi iptal etmek istediğinize emin misiniz? Sadece henüz KİRALANMAMIŞ (müsait) olan boş seanslar silinecektir.',
+      type: 'warning',
+      isConfirm: true
+    };
+
+    this.pendingAction = () => {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
 
       this.http.post(`${environment.apiUrl}/Courts/${this.selectedCourtId}/cancel-schedule`, {}, { headers }).subscribe({
         next: (res: any) => {
-          alert(res.message);
+          this.alertModalState = { isOpen: true, title: 'Başarılı', message: res.message, type: 'success', isConfirm: false };
           this.loadCourtSlots(this.selectedCourtId!);
           this.cdr.detectChanges();
         },
         error: (err) => {
-          alert(err.error?.message || err.error || "İptal işlemi sırasında hata oluştu.");
+          this.alertModalState = { isOpen: true, title: 'Hata', message: err.error?.message || err.error || "İptal işlemi sırasında hata oluştu.", type: 'error', isConfirm: false };
           this.cdr.detectChanges();
         }
       });
+    };
+  }
+
+  onAlertConfirm() {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
     }
   }
 }

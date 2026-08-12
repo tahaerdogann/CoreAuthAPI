@@ -9,7 +9,7 @@
   <div class="stats-grid" *ngIf="!isLoading">
     <div class="stat-card">
       <div class="stat-icon courts">
-        <i class="fas fa-futbol"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line><path d="M16 12a4 4 0 0 0-8 0"></path><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
       </div>
       <div class="stat-info">
         <h3>Toplam Saha</h3>
@@ -18,8 +18,18 @@
     </div>
 
     <div class="stat-card">
+      <div class="stat-icon pending">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div class="stat-info">
+        <h3>Onay Bekleyen</h3>
+        <p class="stat-value">{{ stats.pendingBookings }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
       <div class="stat-icon bookings">
-        <i class="fas fa-calendar-check"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
       </div>
       <div class="stat-info">
         <h3>Onaylı Rezervasyon</h3>
@@ -29,11 +39,11 @@
 
     <div class="stat-card">
       <div class="stat-icon revenue">
-        <i class="fas fa-lira-sign"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
       </div>
       <div class="stat-info">
-        <h3>Beklenen Gelir</h3>
-        <p class="stat-value">{{ stats.activeRevenue }} ₺</p>
+        <h3>Toplam Gelir (Seçili Filtre)</h3>
+        <p class="stat-value">{{ stats.activeRevenue | number:'1.0-0' }} ₺</p>
       </div>
     </div>
   </div>

@@ -1,9 +1,9 @@
 <div class="courts-container">
   <div class="header-section">
     <h2>Sahalarım</h2>
-    <a routerLink="/saha-ekle" class="btn btn-primary">
+    <button (click)="openAddModal()" class="btn btn-primary">
       <i class="fas fa-plus"></i> Yeni Saha Ekle
-    </a>
+    </button>
   </div>
 
   <div *ngIf="isLoading" class="loading-state">
@@ -18,7 +18,7 @@
   <div class="courts-grid" *ngIf="!isLoading && courts.length > 0">
     <div class="court-card" *ngFor="let court of courts">
       <!-- Resim (Clickable) -->
-      <a [routerLink]="['/court', court.id || court.Id]" class="court-img-link">
+      <a [routerLink]="['/court-detail', court.id || court.Id]" class="court-img-link">
         <div class="court-img">
           <img [src]="(court.photos && court.photos.length > 0) ? (court.photos[0].url || court.photos[0]) : 'assets/placeholder-court.jpg'" alt="{{court.name}}">
           <div class="status-badge" [ngClass]="court.isPublished ? 'published' : 'draft'">
@@ -27,7 +27,7 @@
         </div>
       </a>
       
-      <a [routerLink]="['/court', court.id || court.Id]" class="court-info-link">
+      <a [routerLink]="['/court-detail', court.id || court.Id]" class="court-info-link">
         <div class="court-info">
           <h3>{{ court.name }}</h3>
           <p class="sport-type"><i class="fas fa-futbol"></i> {{ court.sportType }}</p>
@@ -59,20 +59,30 @@
   <div *ngIf="isEditModalOpen" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Sahayı Düzenle</h2>
+        <h2>{{ selectedCourtData ? 'Sahayı Düzenle' : 'Yeni Saha Ekle' }}</h2>
         <button (click)="closeEditModal()" class="close-btn">&times;</button>
       </div>
       <div class="modal-body">
         <app-court-form
-          *ngIf="selectedCourtData"
+          *ngIf="isEditModalOpen"
           [initialData]="selectedCourtData"
           [isSubmitting]="isUpdatingCourt"
           [showCancel]="true"
-          submitLabel="Değişiklikleri Güncelle"
-          (formSubmit)="onEditCourtSubmit($event)"
+          [submitLabel]="selectedCourtData ? 'Değişiklikleri Güncelle' : 'Sahayı Kaydet'"
+          (formSubmit)="onCourtSubmit($event)"
           (formCancel)="closeEditModal()">
         </app-court-form>
       </div>
     </div>
   </div>
+
+  <app-alert-modal
+    [isOpen]="alertModalState.isOpen"
+    [title]="alertModalState.title"
+    [message]="alertModalState.message"
+    [type]="alertModalState.type"
+    [isConfirm]="alertModalState.isConfirm"
+    (onConfirm)="onAlertConfirm()"
+    (onClose)="alertModalState.isOpen = false">
+  </app-alert-modal>
 </div>

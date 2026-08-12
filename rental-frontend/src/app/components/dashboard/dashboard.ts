@@ -7,19 +7,29 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FlatpickrModule } from 'angularx-flatpickr';
+import { AlertModalComponent } from '../shared/alert-modal.component';
 
 declare var google: any;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, FlatpickrModule],
+  imports: [CommonModule, FormsModule, FlatpickrModule, AlertModalComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
 export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   sahaListesi: any[] = [];
   isLoading: boolean = false;
+  
+  // Modal Props
+  alertModalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success'|'error'|'warning'|'info',
+    isConfirm: false
+  };
   
   // Pagination & Sorting state
   page: number = 1;
@@ -127,11 +137,13 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         },
         (error) => {
           console.error("Konum alınamadı:", error);
-          alert("Konumunuz alınamadı. Lütfen tarayıcı izinlerinizi kontrol edin.");
+          this.ngZone.run(() => {
+            this.alertModalState = { isOpen: true, title: 'Hata', message: 'Konumunuz alınamadı. Lütfen tarayıcı izinlerinizi kontrol edin.', type: 'error', isConfirm: false };
+          });
         }
       );
     } else {
-      alert("Tarayıcınız konum servisini desteklemiyor.");
+      this.alertModalState = { isOpen: true, title: 'Hata', message: 'Tarayıcınız konum servisini desteklemiyor.', type: 'error', isConfirm: false };
     }
   }
 

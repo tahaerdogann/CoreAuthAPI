@@ -4,11 +4,15 @@ using System.Security.Claims;
 using Rental.DataAccess.Context;
 using Rental.Entities.Entity;
 using Rental.Entities.Dtos;
+using Rental.Entities.Enum;
 using System.Text.Json;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace CoreAuthAPI.Controllers
 {
@@ -104,7 +108,7 @@ namespace CoreAuthAPI.Controllers
                 .Where(c => c.IsActive && c.IsPublished && _context.CourtSlots.Any(s => 
                     s.CourtId == c.Id && 
                     s.StartTime >= DateTime.Now &&
-                    !s.IsBooked &&
+                    s.Status == SlotStatus.Available &&
                     (!parsedStartDate.HasValue || s.StartTime.Date >= parsedStartDate.Value.Date) &&
                     (!parsedEndDate.HasValue || s.StartTime.Date <= parsedEndDate.Value.Date) &&
                     (!parsedStartTime.HasValue || s.StartTime.TimeOfDay >= parsedStartTime.Value) &&
@@ -130,7 +134,7 @@ namespace CoreAuthAPI.Controllers
                 c.AddressDetail,
                 c.Description,
                 HourlyPrice = _context.CourtSlots
-                                .Where(s => s.CourtId == c.Id && !s.IsBooked && s.StartTime >= DateTime.Now)
+                                .Where(s => s.CourtId == c.Id && s.Status == SlotStatus.Available && s.StartTime >= DateTime.Now)
                                 .Min(s => (decimal?)s.Price) ?? 0,
                 c.Amenities,
                 c.RentalOptionsJson,
@@ -178,7 +182,7 @@ namespace CoreAuthAPI.Controllers
             if (!string.IsNullOrEmpty(sortBy))
             {
                 switch (sortBy.ToLower())
-                {
+            {
                     case "price_asc":
                         finalResults = finalResults.OrderBy(r => r.HourlyPrice);
                         break;
@@ -253,7 +257,6 @@ namespace CoreAuthAPI.Controllers
         [AllowAnonymous]
         public IActionResult GetCourtSlots(Guid courtId)
         {
-            // PROFESYONEL DOKUNUŞ: Geçmişteki slotları getirme, sadece bugünden sonrasını getir ve tarihe göre sırala.
             var slots = _context.CourtSlots
                 .Where(s => s.CourtId == courtId && s.StartTime >= DateTime.Now)
                 .OrderBy(s => s.StartTime)
@@ -322,7 +325,7 @@ namespace CoreAuthAPI.Controllers
                     var slotStartTime = date.Add(currentTime);
                     var slotEndTime = slotStartTime.AddMinutes(request.SessionDurationMinutes);
 
-                    // ÇAKIŞMA KONTROLÜ: Yeni slotun başlangıcı, mevcutlardan birinin bitişinden önce VE yeni slotun bitişi mevcutlardan birinin başlangıcından sonra mı?
+                    // ÇAKIŞMA KONTROLÜ
                     var hasConflict = existingSlots.Any(s => s.StartTime < slotEndTime && s.EndTime > slotStartTime);
 
                     if (hasConflict)
@@ -340,7 +343,7 @@ namespace CoreAuthAPI.Controllers
                             StartTime = slotStartTime,
                             EndTime = slotEndTime,
                             Price = currentPrice,
-                            IsBooked = false
+                            Status = SlotStatus.Available
                         });
                     }
 
@@ -378,14 +381,14 @@ namespace CoreAuthAPI.Controllers
             if (userRole != "Admin" && court?.OwnerId.ToString() != userIdStr)
                 return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
 
-            slot.IsBooked = !slot.IsBooked;
-            if (!slot.IsBooked) 
+            slot.Status = slot.Status == SlotStatus.Available ? SlotStatus.Booked : SlotStatus.Available;
+            if (slot.Status == SlotStatus.Available) 
             {
                 slot.RenterId = null; 
             }
 
             _context.SaveChanges();
-            return Ok(new { message = "Seans durumu başarıyla güncellendi.", isBooked = slot.IsBooked });
+            return Ok(new { message = "Seans durumu başarıyla güncellendi.", isBooked = slot.Status != SlotStatus.Available });
         }
 
         [HttpPost("{courtId:guid}/cancel-schedule")]
@@ -400,10 +403,9 @@ namespace CoreAuthAPI.Controllers
             if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
                 return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
 
-            var unbookedSlots = _context.CourtSlots.Where(s => s.CourtId == courtId && !s.IsBooked).ToList();
+            var unbookedSlots = _context.CourtSlots.Where(s => s.CourtId == courtId && s.Status == SlotStatus.Available).ToList();
             _context.CourtSlots.RemoveRange(unbookedSlots);
             
-            // Otomatik uzatmayı da kapatalım ki arkadan tekrar üretmesin
             var activeSchedules = _context.CourtSchedules.Where(s => s.CourtId == courtId).ToList();
             foreach (var sched in activeSchedules)
             {
@@ -479,25 +481,21 @@ namespace CoreAuthAPI.Controllers
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-            if (court == null) return NotFound("Saha bulunamadı.");
+            if (court == null) return NotFound(new { message = "Saha bulunamadı." });
             if (userRole != "Admin" && court.OwnerId.ToString() != userIdStr)
-                return Unauthorized("Bu sahada işlem yapma yetkiniz yok.");
+                return Unauthorized(new { message = "Bu sahada işlem yapma yetkiniz yok." });
 
-            // Sadece gelecekteki dolu rezervasyonları kontrol et
-            bool hasFutureBookedSlots = _context.CourtSlots.Any(s => s.CourtId == id && s.IsBooked && s.StartTime >= DateTime.Now);
+            bool hasFutureBookedSlots = _context.CourtSlots.Any(s => s.CourtId == id && s.Status != SlotStatus.Available && s.StartTime >= DateTime.Now);
             if (hasFutureBookedSlots)
-                return BadRequest("Bu sahanın gelecekte aktif (dolu) rezervasyonları bulunduğu için silinemez!");
+                return BadRequest(new { message = "Bu sahanın gelecekte aktif (dolu) rezervasyonları bulunduğu için silinemez!" });
 
-            // Sahayı pasife al (Soft Delete)
             court.IsActive = false;
 
-            // Gelecekteki BOŞ seansları sil (çünkü saha artık kiralanamaz)
             var futureUnbookedSlots = _context.CourtSlots
-                .Where(s => s.CourtId == id && !s.IsBooked && s.StartTime >= DateTime.Now)
+                .Where(s => s.CourtId == id && s.Status == SlotStatus.Available && s.StartTime >= DateTime.Now)
                 .ToList();
             _context.CourtSlots.RemoveRange(futureUnbookedSlots);
 
-            // Otomatik uzatmayı kapat
             var schedules = _context.CourtSchedules.Where(s => s.CourtId == id).ToList();
             foreach (var sched in schedules)
             {
@@ -543,7 +541,6 @@ namespace CoreAuthAPI.Controllers
             {
                 var coverPublicId = request.Photos.FirstOrDefault(p => p.IsCover)?.PublicId;
 
-                // 1. EF Core Change Tracker problemlerini aşmak için doğrudan veritabanında güncelleme yapalım.
                 _context.CourtPhotos
                     .Where(p => p.CourtId == court.Id && p.IsCover && p.PublicId != coverPublicId)
                     .ExecuteUpdate(s => s.SetProperty(p => p.IsCover, false));
@@ -555,7 +552,6 @@ namespace CoreAuthAPI.Controllers
                         .ExecuteUpdate(s => s.SetProperty(p => p.IsCover, true));
                 }
 
-                // 2. Fotoğrafları güncelle veya yeni ekle
                 foreach (var photoDto in request.Photos)
                 {
                     var existingPhoto = court.Photos.FirstOrDefault(p => p.PublicId == photoDto.PublicId);
@@ -572,7 +568,6 @@ namespace CoreAuthAPI.Controllers
                     }
                     else
                     {
-                        // Sadece sırasını güncelle (IsCover işlemi yukarıda ExecuteUpdate ile yapıldı)
                         if (existingPhoto.DisplayOrder != photoDto.DisplayOrder)
                         {
                             existingPhoto.DisplayOrder = photoDto.DisplayOrder;
@@ -624,7 +619,6 @@ namespace CoreAuthAPI.Controllers
             var photo = _context.CourtPhotos.FirstOrDefault(p => p.Id == photoId && p.CourtId == courtId);
             if (photo == null) return NotFound("Fotoğraf bulunamadı.");
 
-            // 1. Cloudinary'den sil
             if (!string.IsNullOrEmpty(photo.PublicId))
             {
                 var cloudName = _configuration["Cloudinary:CloudName"];
@@ -641,7 +635,6 @@ namespace CoreAuthAPI.Controllers
                 }
             }
 
-            // 2. DB'den sil
             _context.CourtPhotos.Remove(photo);
             _context.SaveChanges();
 
@@ -661,8 +654,6 @@ namespace CoreAuthAPI.Controllers
 
             var timestamp = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
             
-            // Cloudinary imza (signature) iin parametrelerin alfabetik srada olmas ARTTIR!
-            // Eski CloudinaryDotNet srmleri Dictionary'yi otomatik sralamad iin SortedDictionary kullanyoruz.
             var parameters = new SortedDictionary<string, object>
             {
                 { "folder", "courts" },
@@ -672,7 +663,6 @@ namespace CoreAuthAPI.Controllers
             Account account = new Account(cloudName, apiKey, apiSecret);
             Cloudinary cloudinary = new Cloudinary(account);
             
-            // İmzayı oluştur (Sadece yetkili API'miz bunu yapabilir)
             var signature = cloudinary.Api.SignParameters(parameters);
 
             return Ok(new

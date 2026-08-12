@@ -30,7 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         console.error('🚨 GÜVENLİK UYARISI: Yetkisiz erişim denemesi yakalandı!', error);
         
         // Kullanıcıya mesaj göster
-        alert('Yetkisiz işlem veya geçersiz oturum! Lütfen tekrar giriş yapın.');
+        // (alert yerine login sayfasına yönlendirip orda bir mesaj gösterebiliriz, şimdilik sessiz yönlendirme yapıyoruz)
         
         // Sahte/geçersiz token'ı sil
         localStorage.removeItem('token');

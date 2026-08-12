@@ -124,25 +124,31 @@
 
     <!-- SAĞ TARAF: ÜRETİLEN İLANLARIN LİSTESİ -->
     <div class="right-panel">
-      <div class="panel-header">
-        <h3>Üretilen Seanslar</h3>
-        <span class="count-badge">{{ courtSlots.length }} Adet</span>
+      <div *ngIf="courtSlots.length > 0" class="actions-bar" style="margin-bottom: 1.5rem;">
+        <button (click)="cancelSchedule()" class="btn btn-outline-danger" style="width: 100%; justify-content: center; padding: 0.75rem;" title="Takvimlendirmeyi İptal Et">
+          <i class="fas fa-trash-alt"></i> Takvimlendirmeyi İptal Et
+        </button>
       </div>
 
-      <div *ngIf="courtSlots.length > 0" class="actions-bar">
-        <button (click)="cancelSchedule()" class="btn btn-outline-danger">Takvimi İptal Et</button>
+      <div class="panel-header">
+        <div class="header-titles">
+          <h3>Saha Takvimi <span class="count-badge" *ngIf="courtSlots.length > 0">{{ courtSlots.length }} Seans</span></h3>
+          <p class="text-muted" *ngIf="courtSlots.length > 0">
+            Bir seansa tıklayarak dışarıdan rezervasyon ekleyebilir veya bakıma alabilirsiniz.
+          </p>
+        </div>
       </div>
 
       <div *ngIf="courtSlots.length > 0; else noSlots" class="slots-list">
-        <div *ngFor="let slot of courtSlots" class="slot-card">
+        <div *ngFor="let slot of courtSlots" class="slot-card clickable" (click)="openSlotActionModal(slot)">
           <div class="slot-info">
             <strong>{{ (slot.startTime || slot.StartTime) | date:'dd.MM.yyyy' }}</strong>
             <p>{{ (slot.startTime || slot.StartTime) | date:'HH:mm' }} - {{ (slot.endTime || slot.EndTime) | date:'HH:mm' }}</p>
             <p class="price">{{ slot.price || slot.Price }} ₺</p>
           </div>
           <div class="slot-status">
-            <span class="badge" [ngClass]="(slot.isBooked || slot.IsBooked) ? 'badge-danger' : 'badge-success'">
-              {{ (slot.isBooked || slot.IsBooked) ? 'Dolu' : 'Müsait' }}
+            <span class="badge" [ngClass]="getSlotStatus(slot).class">
+              {{ getSlotStatus(slot).text }}
             </span>
           </div>
         </div>
@@ -154,6 +160,54 @@
           <p>Henüz bu saha için üretilmiş bir takvim bulunmuyor.</p>
         </div>
       </ng-template>
+    </div>
+  </div>
+
+  <app-alert-modal
+    [isOpen]="alertModalState.isOpen"
+    [title]="alertModalState.title"
+    [message]="alertModalState.message"
+    [type]="alertModalState.type"
+    [isConfirm]="alertModalState.isConfirm"
+    (onConfirm)="onAlertConfirm()"
+    (onClose)="alertModalState.isOpen = false">
+  </app-alert-modal>
+
+  <!-- Slot Action Modal -->
+  <div class="modal-overlay" *ngIf="isSlotActionModalOpen" (click)="closeSlotActionModal()">
+    <div class="modal-content slot-action-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h4>{{ (selectedSlotForAction?.startTime || selectedSlotForAction?.StartTime) | date:'dd.MM.yyyy HH:mm' }} Seansı İşlemleri</h4>
+        <button class="close-btn" (click)="closeSlotActionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="action-tabs">
+          <button [class.active]="activeTab === 'external'" (click)="activeTab = 'external'">Dışarıdan Ekle</button>
+          <button [class.active]="activeTab === 'maintenance'" (click)="activeTab = 'maintenance'">Bakıma Al</button>
+        </div>
+
+        <div class="tab-content" *ngIf="activeTab === 'external'">
+          <p class="text-muted mb-3" style="font-size: 0.9rem;">Sisteme üye olmayan, dışarıdan (ör. telefonla) ulaşan bir müşteriyi manuel olarak kaydedin.</p>
+          <div class="form-group">
+            <label>Müşteri Adı</label>
+            <input type="text" class="form-control" [(ngModel)]="externalCustomerName" placeholder="Örn: Ahmet Yılmaz">
+          </div>
+          <div class="form-group">
+            <label>Telefon Numarası (Opsiyonel)</label>
+            <input type="text" class="form-control" [(ngModel)]="externalCustomerPhone" placeholder="Örn: 0555 555 5555">
+          </div>
+          <button class="btn btn-primary w-100 mt-4" (click)="submitExternalBooking()">Kaydet ve Kapat</button>
+        </div>
+
+        <div class="tab-content" *ngIf="activeTab === 'maintenance'">
+          <p class="text-muted mb-3" style="font-size: 0.9rem;">Bu seansı temizlik, bakım, tadilat veya diğer nedenlerle geçici olarak kiralamaya kapatın.</p>
+          <div class="form-group">
+            <label>Bakım/İptal Notu (Opsiyonel)</label>
+            <textarea class="form-control" [(ngModel)]="maintenanceNote" placeholder="Örn: Saha aydınlatma tamiri" rows="3"></textarea>
+          </div>
+          <button class="btn btn-warning w-100 mt-4 text-white" (click)="submitMaintenance(true)">Bakıma Al / Kapat</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
