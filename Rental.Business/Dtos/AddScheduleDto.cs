@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Rental.Entities.Dtos
+namespace Rental.Business.Dtos
 {
     public class AddScheduleDto
     {

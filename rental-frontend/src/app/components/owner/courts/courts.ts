@@ -122,9 +122,11 @@ export class CourtsComponent implements OnInit {
       next: (data: any) => {
         this.selectedCourtData = data;
         this.isEditModalOpen = true;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.alertModalState = { isOpen: true, title: 'Hata', message: 'Saha detayları alınamadı.', type: 'error', isConfirm: false };
+        this.cdr.detectChanges();
       }
     });
   }

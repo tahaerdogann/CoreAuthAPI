@@ -114,12 +114,10 @@ export class AlertModalComponent {
   @Output() onClose = new EventEmitter<void>();
 
   closeModal() {
-    this.isOpen = false;
     this.onClose.emit();
   }
 
   confirmAction() {
-    this.isOpen = false;
     this.onConfirm.emit();
   }
 }

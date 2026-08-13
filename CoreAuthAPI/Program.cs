@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Rental.Business.Interfaces;
+using Rental.Business.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +51,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 builder.Services.AddHostedService<CoreAuthAPI.Services.AutoScheduleWorker>();
+builder.Services.AddScoped<IAuthService, AuthManager>();
+builder.Services.AddScoped<ICourtService, CourtManager>();
+builder.Services.AddScoped<IFavoriteService, FavoriteManager>();
+builder.Services.AddScoped<IBookingService, BookingManager>();
+builder.Services.AddScoped<IBackgroundJobsService, BackgroundJobsManager>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

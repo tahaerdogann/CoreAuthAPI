@@ -84,7 +84,7 @@
     [message]="alertModalState.message"
     [type]="alertModalState.type"
     [isConfirm]="alertModalState.isConfirm"
-    (onConfirm)="onAlertConfirm()"
+    (onConfirm)="alertModalState.isOpen = false; onAlertConfirm()"
     (onClose)="alertModalState.isOpen = false">
   </app-alert-modal>
 </div>

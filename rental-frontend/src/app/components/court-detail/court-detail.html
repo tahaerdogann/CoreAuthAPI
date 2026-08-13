@@ -163,9 +163,6 @@
             <p>Kısa sürede güvenle kiralayın</p>
           </div>
           
-          <div *ngIf="bookingSuccess" class="alert-success">{{ bookingSuccess }}</div>
-          <div *ngIf="bookingError" class="alert-error">{{ bookingError }}</div>
-          
           <div *ngIf="slots.length === 0" class="empty-state">
             Bu saha için henüz üretilmiş bir takvim bulunmuyor.
           </div>
@@ -185,15 +182,16 @@
 
             <!-- Seçili Günün Saatleri -->
             <div class="slots-list">
-              <div *ngFor="let slot of filteredSlots" class="slot-card" [class.booked]="slot.isBooked">
+              <div *ngFor="let slot of filteredSlots" class="slot-card" [class.booked]="slot.status !== 1">
                 <div class="slot-info">
                   <span class="slot-time">{{ slot.startTime | date:'HH:mm' }} - {{ slot.endTime | date:'HH:mm' }}</span>
                   <span class="slot-price">{{ slot.price }} ₺</span>
                 </div>
-                <button *ngIf="!slot.isBooked" class="book-btn" (click)="!court.isPublished ? null : openConfirmModal(slot)" [disabled]="!court.isPublished" [class.disabled-btn]="!court.isPublished">
+                <button *ngIf="slot.status === 1" class="book-btn" (click)="!court.isPublished ? null : openConfirmModal(slot)" [disabled]="!court.isPublished" [class.disabled-btn]="!court.isPublished">
                   {{ court.isPublished ? 'KİRALA' : 'ÖNİZLEME' }}
                 </button>
-                <button *ngIf="slot.isBooked" class="booked-btn" disabled>DOLU</button>
+                <button *ngIf="slot.status === 2" class="booked-btn" disabled>DOLU</button>
+                <button *ngIf="slot.status === 3" class="booked-btn" disabled style="background-color: #6c757d; color: white;">BAKIMDA</button>
               </div>
               <div *ngIf="filteredSlots.length === 0" class="empty-state">Bu gün için boş seans bulunamadı.</div>
             </div>
@@ -245,3 +243,12 @@
     </div>
   </div>
 </div>
+
+<app-alert-modal
+  [isOpen]="alertModalState.isOpen"
+  [title]="alertModalState.title"
+  [message]="alertModalState.message"
+  [type]="alertModalState.type"
+  [isConfirm]="alertModalState.isConfirm"
+  (onClose)="alertModalState.isOpen = false">
+</app-alert-modal>

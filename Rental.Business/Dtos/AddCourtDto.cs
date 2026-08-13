@@ -1,6 +1,6 @@
 using Rental.Entities.Enum;
 
-namespace Rental.Entities.Dtos
+namespace Rental.Business.Dtos
 {
     public class AddCourtDto
     {

@@ -6,11 +6,12 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth';
 import { FavoriteService } from '../../services/favorite';
 import { MapPickerComponent } from '../shared/map-picker.component';
+import { AlertModalComponent } from '../shared/alert-modal.component';
 
 @Component({
   selector: 'app-court-detail',
   standalone: true,
-  imports: [CommonModule, MapPickerComponent],
+  imports: [CommonModule, MapPickerComponent, AlertModalComponent],
   templateUrl: './court-detail.html',
   styleUrls: ['./court-detail.css']
 })
@@ -30,6 +31,14 @@ export class CourtDetailComponent implements OnInit {
   availableDates: string[] = [];
   selectedDate: string = '';
   filteredSlots: any[] = [];
+
+  alertModalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success' as 'success' | 'error' | 'warning' | 'info',
+    isConfirm: false
+  };
 
   lightboxVisible: boolean = false;
   currentPhotoIndex: number = 0;
@@ -169,6 +178,16 @@ export class CourtDetailComponent implements OnInit {
     this.slotToBook = null;
   }
 
+  showAlert(title: string, message: string, type: 'success' | 'error' | 'warning' | 'info') {
+    this.alertModalState = {
+      isOpen: true,
+      title,
+      message,
+      type,
+      isConfirm: false
+    };
+  }
+
   bookSlot() {
     if (!this.slotToBook) return;
     
@@ -179,13 +198,13 @@ export class CourtDetailComponent implements OnInit {
     
     this.http.post(`${environment.apiUrl}/Bookings/create`, payload).subscribe({
       next: (res: any) => {
-        this.bookingSuccess = res.message || 'Kiralama başarılı!';
         this.closeConfirmModal();
+        this.showAlert('Başarılı!', res.message || 'Kiralama başarılı!', 'success');
         this.loadCourtSlots(); // Takvimi yenile
       },
       error: (err) => {
-        this.bookingError = err.error?.message || err.error || 'Kiralama sırasında bir hata oluştu.';
         this.closeConfirmModal();
+        this.showAlert('Hata!', err.error?.message || err.error || 'Kiralama sırasında bir hata oluştu.', 'error');
       }
     });
   }

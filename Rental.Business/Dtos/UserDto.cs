@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace CoreAuthAPI.Dtos
+namespace Rental.Business.Dtos
 {
     public class RegisterDto : IValidatableObject
     {
