@@ -54,12 +54,10 @@ export class CourtDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
-      const idParam = params.get('id');
-      if (idParam) {
-        this.courtId = idParam;
+      const slugParam = params.get('slug');
+      if (slugParam) {
+        this.courtId = slugParam; // courtId değişkeni artık slug tutuyor (API istekleri için)
         this.loadCourtDetails();
-        this.loadCourtSlots();
-        this.checkFavoriteStatus();
       } else {
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -85,6 +83,11 @@ export class CourtDetailComponent implements OnInit {
         this.court.parsedAmenities = this.getAmenitiesList(this.court.amenities || 0);
 
         this.isLoading = false;
+        
+        // Sahayı çektikten sonra id'si ile seansları yükle
+        this.loadCourtSlots(this.court.id);
+        this.checkFavoriteStatus();
+        
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -112,8 +115,8 @@ export class CourtDetailComponent implements OnInit {
     return list;
   }
 
-  loadCourtSlots() {
-    this.http.get(`${environment.apiUrl}/Courts/slots/${this.courtId}`).subscribe({
+  loadCourtSlots(actualCourtId: string) {
+    this.http.get(`${environment.apiUrl}/Courts/slots/${actualCourtId}`).subscribe({
       next: (data: any) => {
         this.slots = data?.$values || data || [];
         this.groupSlotsByDate();
@@ -124,9 +127,9 @@ export class CourtDetailComponent implements OnInit {
   }
 
   checkFavoriteStatus() {
-    if (this.authService.isLoggedIn()) {
+    if (this.authService.isLoggedIn() && this.court?.id) {
       console.log('checkFavoriteStatus: API isteği atılıyor...');
-      this.favoriteService.checkFavorite(this.courtId).subscribe({
+      this.favoriteService.checkFavorite(this.court.id).subscribe({
         next: (res) => {
           console.log('checkFavoriteStatus: API Yanıtı:', res);
           this.isFavorite = res.isFavorite;
@@ -138,12 +141,12 @@ export class CourtDetailComponent implements OnInit {
         }
       });
     } else {
-      console.log('checkFavoriteStatus: Kullanıcı giriş yapmamış, kontrol atlandı.');
+      console.log('checkFavoriteStatus: Kullanıcı giriş yapmamış veya court id yok, kontrol atlandı.');
     }
   }
 
   toggleFavorite() {
-    console.log('toggleFavorite tetiklendi! CourtId:', this.courtId);
+    console.log('toggleFavorite tetiklendi! CourtId:', this.court?.id);
     if (!this.authService.isLoggedIn()) {
       console.log('Kullanıcı giriş yapmamış, logine yönlendiriliyor.');
       this.router.navigate(['/login'], { queryParams: { returnUrl: `/court-detail/${this.courtId}` } });
@@ -151,7 +154,7 @@ export class CourtDetailComponent implements OnInit {
     }
     
     console.log('API isteği atılıyor...');
-    this.favoriteService.toggleFavorite(this.courtId).subscribe({
+    this.favoriteService.toggleFavorite(this.court.id).subscribe({
       next: (res) => {
         console.log('API Başarılı Yanıt Döndü:', res);
         this.isFavorite = res.isFavorite;
@@ -200,7 +203,7 @@ export class CourtDetailComponent implements OnInit {
       next: (res: any) => {
         this.closeConfirmModal();
         this.showAlert('Başarılı!', res.message || 'Kiralama başarılı!', 'success');
-        this.loadCourtSlots(); // Takvimi yenile
+        this.loadCourtSlots(this.court.id); // Takvimi yenile
       },
       error: (err) => {
         this.closeConfirmModal();

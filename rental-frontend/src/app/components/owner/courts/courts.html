@@ -18,7 +18,7 @@
   <div class="courts-grid" *ngIf="!isLoading && courts.length > 0">
     <div class="court-card" *ngFor="let court of courts">
       <!-- Resim (Clickable) -->
-      <a [routerLink]="['/court-detail', court.id || court.Id]" class="court-img-link">
+      <a [routerLink]="['/court-detail', court.slug || court.Slug]" class="court-img-link">
         <div class="court-img">
           <img [src]="(court.photos && court.photos.length > 0) ? (court.photos[0].url || court.photos[0]) : 'assets/placeholder-court.jpg'" alt="{{court.name}}">
           <div class="status-badge" [ngClass]="court.isPublished ? 'published' : 'draft'">
@@ -27,7 +27,7 @@
         </div>
       </a>
       
-      <a [routerLink]="['/court-detail', court.id || court.Id]" class="court-info-link">
+      <a [routerLink]="['/court-detail', court.slug || court.Slug]" class="court-info-link">
         <div class="court-info">
           <h3>{{ court.name }}</h3>
           <p class="sport-type"><i class="fas fa-futbol"></i> {{ court.sportType }}</p>

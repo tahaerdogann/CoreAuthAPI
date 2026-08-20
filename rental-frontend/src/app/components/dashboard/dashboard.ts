@@ -284,8 +284,8 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.scrollToResults();
   }
 
-  goToCourtDetail(id: string) {
-    this.router.navigate(['/court-detail', id]);
+  goToCourtDetail(slug: string) {
+    this.router.navigate(['/court-detail', slug]);
   }
 
   scrollToResults() {

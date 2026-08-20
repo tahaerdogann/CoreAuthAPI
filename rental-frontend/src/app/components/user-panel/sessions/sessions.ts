@@ -43,8 +43,8 @@ export class SessionsComponent implements OnInit {
     this.activeTab = tab;
   }
 
-  rebook(courtId: string): void {
-    this.router.navigate(['/court-detail', courtId]);
+  rebook(slug: string): void {
+    this.router.navigate(['/court-detail', slug]);
   }
 
   openCancelModal(booking: any): void {

@@ -65,7 +65,7 @@ export const routes: Routes = [
 
   // 2. Herkesin Girebildiği Sayfalar
   { path: 'dashboard', component: Dashboard },
-  { path: 'court-detail/:id', component: CourtDetailComponent },
+  { path: 'court-detail/:slug', component: CourtDetailComponent },
 
   // 3. KULLANICI SAYFALARI (Giriş zorunlu)
   { path: 'profile', redirectTo: 'user/profile', pathMatch: 'full' },
@@ -96,8 +96,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
-  { path: 'owner-dashboard', redirectTo: 'owner/dashboard' }, // Eskiyi yönlendir
-  { path: 'saha-ekle', redirectTo: 'owner/courts' }, // Eskiyi yönlendir
+
 
   // 5. JOKER ROTALAR (Kesinlikle en altta olmalı!)
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

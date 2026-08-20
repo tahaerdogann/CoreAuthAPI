@@ -45,6 +45,7 @@ namespace Rental.Business.Services
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
                 OwnerId = userId,
+                Slug = GenerateUniqueSlug(request.Name),
                 IsActive = true,
                 IsPublished = request.IsPublished,
                 Photos = request.Photos?.Select(p => new CourtPhoto 
@@ -107,6 +108,7 @@ namespace Rental.Business.Services
 
             var dbResults = query.Select(c => new {
                 c.Id,
+                c.Slug,
                 c.Name,
                 c.SportType,
                 c.SurfaceType,
@@ -130,6 +132,7 @@ namespace Rental.Business.Services
 
             var finalResults = dbResults.Select(r => new {
                 r.Id,
+                r.Slug,
                 r.Name,
                 r.SportType,
                 r.SurfaceType,
@@ -460,6 +463,7 @@ namespace Rental.Business.Services
                 return ServiceResult.Failure("Bu sahada işlem yapma yetkiniz yok.");
 
             court.Name = request.Name;
+            court.Slug = GenerateUniqueSlug(request.Name, court.Id);
             court.SportType = request.SportType;
             court.SurfaceType = request.SurfaceType;
             court.City = request.City;
@@ -592,6 +596,87 @@ namespace Rental.Business.Services
                 cloudName,
                 folder = "courts"
             });
+        }
+        public ServiceResult GetCourtBySlug(string slug, Guid? userId)
+        {
+            var court = _context.Courts
+                .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
+                .FirstOrDefault(c => c.Slug == slug);
+                
+            if (court == null)
+                return ServiceResult.Failure("Saha bulunamadı.");
+
+            if (!court.IsActive || !court.IsPublished)
+            {
+                if (!userId.HasValue || court.OwnerId != userId.Value)
+                {
+                    return ServiceResult.Failure("Bu saha sistemden kaldırılmış veya henüz yayında değil.");
+                }
+            }
+
+            return ServiceResult.Success(court);
+        }
+
+        public ServiceResult FixExistingSlugs()
+        {
+            var courts = _context.Courts.ToList();
+            int updated = 0;
+            foreach (var court in courts)
+            {
+                if (Guid.TryParse(court.Slug, out _) || string.IsNullOrEmpty(court.Slug))
+                {
+                    court.Slug = GenerateUniqueSlug(court.Name, court.Id);
+                    updated++;
+                }
+            }
+
+            if (updated > 0)
+            {
+                _context.SaveChanges();
+            }
+
+            return ServiceResult.Success(new { message = $"{updated} adet sahanın slug değeri güncellendi." });
+        }
+
+        private string GenerateUniqueSlug(string name, Guid? excludeCourtId = null)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return Guid.NewGuid().ToString();
+
+            var charMap = new Dictionary<char, char> {
+                {'ç', 'c'}, {'ğ', 'g'}, {'ı', 'i'}, {'ö', 'o'}, {'ş', 's'}, {'ü', 'u'},
+                {'Ç', 'c'}, {'Ğ', 'g'}, {'İ', 'i'}, {'Ö', 'o'}, {'Ş', 's'}, {'Ü', 'u'}
+            };
+
+            var slug = new System.Text.StringBuilder(name.Length);
+            foreach (var c in name.ToLowerInvariant())
+            {
+                if (charMap.TryGetValue(c, out char mapped))
+                    slug.Append(mapped);
+                else
+                    slug.Append(c);
+            }
+
+            var cleanSlug = System.Text.RegularExpressions.Regex.Replace(slug.ToString(), @"[^a-z0-9\s-]", "");
+            cleanSlug = System.Text.RegularExpressions.Regex.Replace(cleanSlug, @"\s+", "-").Trim('-');
+            cleanSlug = System.Text.RegularExpressions.Regex.Replace(cleanSlug, @"-+", "-");
+
+            if (string.IsNullOrEmpty(cleanSlug))
+                cleanSlug = Guid.NewGuid().ToString();
+
+            var finalSlug = cleanSlug;
+            int counter = 1;
+
+            while (true)
+            {
+                bool exists = _context.Courts.Any(c => c.Slug == finalSlug && c.Id != excludeCourtId);
+                if (!exists)
+                    break;
+                
+                finalSlug = $"{cleanSlug}-{counter}";
+                counter++;
+            }
+
+            return finalSlug;
         }
     }
 }

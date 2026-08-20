@@ -117,6 +117,7 @@ namespace Rental.Business.Services
                 {
                     BookingId = bs.b.Id,
                     CourtId = c.Id,
+                    CourtSlug = c.Slug,
                     CourtName = c.Name,
                     StartTime = bs.s.StartTime,
                     EndTime = bs.s.EndTime,

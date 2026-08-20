@@ -18,5 +18,11 @@ namespace Rental.DataAccess.Context
         public DbSet<CourtSchedule> CourtSchedules { get; set; }
         public DbSet<UserFavoriteCourt> UserFavoriteCourts { get; set; }
         public DbSet<CourtPhoto> CourtPhotos { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Court>().HasIndex(c => c.Slug).IsUnique();
+        }
     }
 }

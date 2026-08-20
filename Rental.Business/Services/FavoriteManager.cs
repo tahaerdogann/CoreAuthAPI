@@ -59,6 +59,7 @@ namespace Rental.Business.Services
                         Court = new 
                         {
                             f.Court!.Id,
+                            f.Court.Slug,
                             f.Court.Name,
                             f.Court.City,
                             f.Court.District,

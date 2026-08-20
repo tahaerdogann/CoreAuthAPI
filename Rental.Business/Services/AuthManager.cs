@@ -17,8 +17,8 @@ namespace Rental.Business.Services
 {
     public class AuthManager : IAuthService
     {
-        private readonly RentalDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly RentalDbContext _context; //DbContext'i kullanarak veritabanı işlemlerini gerçekleştireceğiz.
+        private readonly IConfiguration _configuration; //appsetings.json'deki JWT ayarlarını okumak için IConfiguration kullanıyoruz.
 
         public AuthManager(RentalDbContext context, IConfiguration configuration)
         {

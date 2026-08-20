@@ -37,8 +37,8 @@ export class FavoritesComponent implements OnInit {
     });
   }
 
-  goToCourt(courtId: string): void {
-    this.router.navigate(['/court-detail', courtId]);
+  goToCourt(slug: string): void {
+    this.router.navigate(['/court-detail', slug]);
   }
 
   removeFavorite(courtId: string, event: Event): void {

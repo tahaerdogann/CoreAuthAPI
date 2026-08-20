@@ -11,7 +11,7 @@
 
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
     <div *ngFor="let item of favorites" 
-         (click)="goToCourt(item.courtId)"
+         (click)="goToCourt(item.court.slug || item.courtId)"
          style="background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative;"
          onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)'"
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'">

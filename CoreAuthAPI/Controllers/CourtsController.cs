@@ -9,7 +9,7 @@ namespace CoreAuthAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // PROFESYONEL DOKUNUŞ: Sisteme giriş yapmamış kimse bu API'ye ulaşamaz.
+    [Authorize] 
     public class CourtsController : ControllerBase
     {
         private readonly ICourtService _courtService;
@@ -65,6 +65,21 @@ namespace CoreAuthAPI.Controllers
         {
             var (userId, _) = GetUserContext();
             var result = _courtService.GetCourtById(id, userId);
+
+            if (!result.IsSuccess)
+            {
+                if (result.ErrorMessage == "Saha bulunamadı.") return NotFound(new { message = result.ErrorMessage });
+                return BadRequest(new { message = result.ErrorMessage });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpGet("{slug}")]
+        [AllowAnonymous]
+        public IActionResult GetCourtBySlug(string slug)
+        {
+            var (userId, _) = GetUserContext();
+            var result = _courtService.GetCourtBySlug(slug, userId);
 
             if (!result.IsSuccess)
             {
