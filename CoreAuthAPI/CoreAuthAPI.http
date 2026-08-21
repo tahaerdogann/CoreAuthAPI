@@ -34,3 +34,7 @@ Authorization: Bearer PASTE_YOUR_TOKEN_HERE
 ### 4. Sadece Adminler Girebilir
 GET {{CoreAuthAPI_HostAddress}}/api/test/admin-only
 Authorization: Bearer PASTE_YOUR_TOKEN_HERE
+
+### 50 Adet Test Sahası Ekle
+POST {{CoreAuthAPI_HostAddress}}/api/Test/seed-courts
+Accept: application/json

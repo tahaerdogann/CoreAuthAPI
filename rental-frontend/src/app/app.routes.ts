@@ -96,7 +96,8 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
-
+  { path: 'owner-dashboard', redirectTo: 'owner/dashboard' }, // Eskiyi yönlendir
+  { path: 'saha-ekle', redirectTo: 'owner/courts' }, // Eskiyi yönlendir
 
   // 5. JOKER ROTALAR (Kesinlikle en altta olmalı!)
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
